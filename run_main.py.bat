@@ -1,0 +1,1 @@
+.\PreliminaryJudge.exe -f 3 -m .\maps\map1.txt "python main.py"
