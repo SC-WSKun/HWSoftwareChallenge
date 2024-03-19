@@ -157,21 +157,28 @@ class Boat:
             print("go", self.id)
         else:
             print("ship", self.id, best_berth_id)
-            self.berths[best_berth_id].boat_arrive(self.id, add_goods)
+            self.berths[best_berth_id].boat_arrive(self.id)
             self.arrive_time = current_frame + self.berths[best_berth_id].transport_time
             self.leave_time = leave_time
             self.future_pos = best_berth_id
-            self.goods += add_goods
 
-    """装货"""
+    """
+    装货
+    """
 
     def load_goods(self, goods_num):
         if self.goods + goods_num > self.num:
             self.goods = self.num
-            return goods_num - (self.num - self.goods)
+            return self.num - self.goods
         else:
             self.goods += goods_num
             return 0
+
+    """
+    船是否满载
+    """
+    def is_full(self):
+        return self.goods == self.num
 
     def next_step(self, current_frame, berths):
         self.berths = berths
@@ -181,16 +188,15 @@ class Boat:
                     current_frame, 1
                 ).values()
                 print("ship", self.id, best_berth_id)
-                self.berths[best_berth_id].boat_arrive(self.id, add_goods)
+                self.berths[best_berth_id].boat_arrive(self.id)
                 self.arrive_time = (
                     current_frame + self.berths[best_berth_id].transport_time
                 )
                 self.leave_time = leave_time
                 self.future_pos = best_berth_id
-                self.goods += add_goods
-            case 1:  # 船在前往泊位的途中（预留后续加入路径规划）
-                if current_frame == self.arrive_time - 1:
-                    self.status = 2
+                self.status = 0
+                self.pos = -1
+                self.goods = 0
                     self.pos = self.future_pos
             case 2:  # 船在泊位上
                 return
