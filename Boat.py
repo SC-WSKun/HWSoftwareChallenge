@@ -36,7 +36,7 @@ class Boat:
                 """
                 best_berth = None
                 best_deal_goods = None
-                best_deal_time = None
+                best_deal_time = 0
                 for single_berth in berths:
                     arrive_time = current_frame + single_berth.transport_time
                     arrive_goods = self.goods
@@ -64,17 +64,14 @@ class Boat:
                     """
                     与best_berth比较
                     """
-                    if best_berth == None or (
-                        (leave_goods - arrive_goods) / (single_berth.transport_time + deal_time)
+                    if (best_berth is None) or (
+                        (leave_goods - arrive_goods)
+                        / (single_berth.transport_time + deal_time)
                         > best_deal_goods / (best_berth.transport_time + best_deal_time)
                     ):
                         best_berth = single_berth
                         best_deal_goods = leave_goods - arrive_goods
                         best_deal_time = deal_time
-                """
-                更新泊位的货物量
-                """
-                best_berth.nums[arrive_time:] -= best_deal_goods
                 return {
                     "best_berth_id": best_berth.id,
                     "leave_time": arrive_time + best_deal_time,
@@ -126,7 +123,7 @@ class Boat:
                     """
                     与best_berth比较
                     """
-                    if best_berth == None or (
+                    if best_berth is None or (
                         (leave_goods - arrive_goods)
                         / (single_berth.transport_time + deal_time)
                         > best_deal_goods / (best_berth.transport_time + best_deal_time)
@@ -134,15 +131,46 @@ class Boat:
                         best_berth = single_berth
                         best_deal_goods = leave_goods - arrive_goods
                         best_deal_time = deal_time
-        if self.goods / berths[self.pos].transport_time > self.goods + best_deal_goods / (
+        if self.goods / berths[
+            self.pos
+        ].transport_time > self.goods + best_deal_goods / (
             berth_move_between + best_deal_time + best_berth.transport_time
         ):
-            return{"best_berth_id": -1}
+            return {"best_berth_id": -1}
         return {
             "best_berth_id": best_berth.id,
             "leave_time": current_frame + berth_move_between + best_deal_time,
             "add_goods": best_deal_goods,
         }
+
+    """离开泊位"""
+
+    def leave_berth(self, current_frame, berths):
+        best_berth_id, leave_time, add_goods = self.search_next_berth(
+            current_frame, berths
+        ).values()
+        if best_berth_id == -1:
+            self.status = 3
+            self.future_pos = -1
+            self.arrive_time = current_frame + berths[self.pos].transport_time
+            print("go", self.id)
+        else:
+            print("ship", self.id, best_berth_id)
+            berths[best_berth_id].boat_arrive(self.id, add_goods)
+            self.arrive_time = current_frame + berths[best_berth_id].transport_time
+            self.leave_time = leave_time
+            self.future_pos = best_berth_id
+            self.goods += add_goods
+
+    """装货"""
+
+    def load_goods(self, goods_num):
+        if self.goods + goods_num > self.num:
+            self.goods = self.num
+            return goods_num - (self.num - self.goods)
+        else:
+            self.goods += goods_num
+            return 0
 
     def next_step(self, current_frame, berths):
         match self.status:
@@ -151,7 +179,7 @@ class Boat:
                     current_frame, berths, 1
                 ).values()
                 print("ship", self.id, best_berth_id)
-                berths[best_berth_id].status = 1
+                berths[best_berth_id].boat_arrive(self.id, add_goods)
                 self.arrive_time = current_frame + berths[best_berth_id].transport_time
                 self.leave_time = leave_time
                 self.future_pos = best_berth_id
@@ -161,20 +189,7 @@ class Boat:
                     self.status = 2
                     self.pos = self.future_pos
             case 2:  # 船在泊位上
-                if current_frame == self.leave_time + 1:
-                    best_berth_id, leave_time, add_goods = self.search_next_berth(current_frame, berths)
-                    if best_berth_id == -1:
-                        self.status = 3
-                        self.future_pos = -1
-                        self.arrive_time = current_frame + berths[self.pos].transport_time
-                        print("go", self.id)
-                    else:
-                        print("ship", self.id, best_berth_id)
-                        berths[best_berth_id].status = 1
-                        self.arrive_time = current_frame + berth_move_between
-                        self.leave_time = leave_time
-                        self.future_pos = best_berth_id
-                        self.goods += add_goods
+                return
             case 3:  # 船在前往虚拟点的途中
                 if current_frame == self.arrive_time - 1:
                     self.status = 0
