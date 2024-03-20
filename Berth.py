@@ -8,8 +8,27 @@ class Berth:
         self.nums = [0 for i in range(15000)]
         self.boat = None # 最快到达港口的船
         self.status = 0 #0没有船要过来，1有船正在泊位上或者将要过来
-    def robort_pull(self,time):#机器人放置物品到码头，time是机器人到达的时间，value是机器人带来的价值
+        self.robot_arrive_time = -1 #机器人到达的时间
+        self.all_path = {}  # 字典，(x,y)到所有点的路径，key是点的编号（number），value是(x,y)到这个点的最短路径，不连通的key不会出现在all_path中
+        # 这个路径记录的是港口到点的路径，机器人要使用这个路径的话得对value进行逆转，即[::-1]
+        # self.total_goods = deque([])  # 用队列记录当前的货物放置顺序，里面都是Goods对象
+        self.total_values = 0  # 当前港口上货物的总价值
+        self.future_goods = {}  # 记录港口未来到达的货物，key是货物在那一帧到达，value是货物的价值
+
+    def robot_pull(self,time,value):#机器人放置物品到码头，time是机器人到达的时间
         self.nums[time:]+=1
+        self.robot_arrive_time = time
+        self.future_goods[time]=value
+
+    def robot_undo(self,time=-1):
+        # -1 表示当前机器人放弃计划后，暂时没有去拿货物
+        self.nums[self.robot_arrive_time:]-=1
+        if(time!=-1):
+            value = self.future_goods[self.robot_arrive_time]
+            self.nums[time:]+=1
+            self.future_goods[time]=value
+        del self.future_goods[self.robot_arrive_time]
+        self.robot_arrive_time=time
 
     
     def boat_load(self,current_time): #每帧执行
@@ -22,6 +41,10 @@ class Berth:
             nums_arr = self.nums[current_time]
             load_nums = self.boat.load_goods(min(nums_arr,self.loading_speed))
             self.nums[self.current_time:]-=load_nums
+            #对价值进行更新
+            goods_key = self.future_goods.keys().sort()
+            for i in range(load_nums):
+                del self.future_goods[goods_key[i]]
 
 
 
