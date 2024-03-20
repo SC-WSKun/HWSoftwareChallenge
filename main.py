@@ -283,10 +283,11 @@ def Init():
         line = input()  # id x y time velocity
         berth_list = [int(c) for c in line.split(sep=" ")]
         id = berth_list[0]
-        berth[id].x = berth_list[1]
-        berth[id].y = berth_list[2]
-        berth[id].transport_time = berth_list[3]
-        berth[id].loading_speed = berth_list[4]
+        berth[id] = Berth(x=berth_list[1],y=berth_list[2],transport_time=berth_list[3],loading_speed=berth_list[4])
+        # berth[id].x = berth_list[1]
+        # berth[id].y = berth_list[2]
+        # berth[id].transport_time = berth_list[3]
+        # berth[id].loading_speed = berth_list[4]
     boat_capacity = int(input())
     okk = input()  # 初始化数据，以ok结束
 
@@ -379,7 +380,9 @@ def Cargo_handling():
                 j.reserve = True    # 标识一下这个货物已经被某个机器人看上了
                 break
         # 港口
+
         berth[robot_number].future_goods[robot_number] = [id + len(path) - 2, new_cargo[2]]
+        # berth[robot_number].robot_pull(id+len(path)-2)
 
 
 def Robot_have_goods(index):
@@ -403,9 +406,11 @@ def Robot_have_goods(index):
                     G = g
                     break
             # 处理港口
-            berth[index].total_goods.append(G)
-            berth[index].total_values += G.value
-            del berth[index].future_goods[index]
+            
+            # berth[index].total_goods.append(G)
+            # berth[index].total_values += G.value
+            # del berth[index].future_goods[index]
+
             # 处理物品
             goods.remove(G)
             # 处理机器人
@@ -432,10 +437,12 @@ def Robot_have_goods(index):
             robot[index].x, robot[index].y = coordinate_x, coordinate_y
             robot[index].path = berth[index].all_path[C_to_N(robot[index].x, robot[index].y)][::-1]
             berth[index].future_goods[index][0] = id + len(robot[index].path) - 1
+            # berth[index].robot_undo(id + len(robot[index].path) - 1)
             tag = True
             break
     if tag == False:    # 说明机器人没有移动，此帧静止，那么只需要改变港口中的future_goods就可以了
         berth[index].future_goods[index][0] += 1
+        # berth[index].robot_undo(boat[index].robort_arrive_time+1)
 
 
 def Robot_donot_have_goods(index):
@@ -483,12 +490,14 @@ def Robot_donot_have_goods(index):
             if distance <= G.life:    # 还能继续拿这个货物
                 robot[index].path = path    # 机器人更新路径
                 berth[index].future_goods[index][0] += 2    # 通知港口晚两帧到
+                # berth[index].robot_undo(berth[index].robot_arrive_time+2)
             else:    # 拿不了这个货物了，机器人变成无目标货物状态
                 G.reserve = False
                 robot[index].path = []
                 robot[index].targetX = robot[index].targetY = -1
                 robot[index].targetValue = 0
                 del berth[index].future_goods[index]
+                # berth[index].robot_undo(-1)
             tag = True
             break
     if tag == False:    # 这个机器人在这一帧动不了，接下来判断原本的货物能不能拿
@@ -499,12 +508,14 @@ def Robot_donot_have_goods(index):
                 break
         if len(robot[index].path) <= G.life - 1:
             berth[index].future_goods[index][0] += 1  # 通知港口晚一帧到
+            # berth[index].robot_undo(berth[index].robot_arrive_time+1)
         else:        # 拿不了这个货物了，机器人变成无目标货物状态
             G.reserve = False
             robot[index].path = []
             robot[index].targetX = robot[index].targetY = -1
             robot[index].targetValue = 0
             del berth[index].future_goods[index]
+            # berth[index].robot_undo(-1)
 
 
 def Robot_control(index):
@@ -543,7 +554,7 @@ def Robot_control(index):
             goods[good_index].reserve = True
             # 港口
             berth[index].future_goods[index] = [id + final_distance - 1, goods[good_index].value]
-
+            # berth[index].robot_pull(id+final_distance-1)
             if robot[index].x == robot[index].targetX and robot[index].y == robot[index].targetY:  # 货物就在机器人脚下
                 print("get", index)
                 G = None
@@ -572,6 +583,11 @@ if __name__ == "__main__":
         Cargo_handling()
         for index in range(robot_num):
             Robot_control(index)
+        
+        #船先决策，港口最后决策
+
+        for berth_index in range(len(Berths)):
+            Berths[berth_index].boat_load(zhen)
 
         # if zhen == 0:
         #     print("ship", 0, 9)
