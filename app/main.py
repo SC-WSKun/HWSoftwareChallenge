@@ -71,11 +71,34 @@ class Robot:
         self.targetX = targetX  # 目标点x坐标
         self.targetY = targetY  # 目标点x坐标
         self.targetValue = 0  # 目标货物价值
+        self.berth_id = -1
+    
+    def choose_berth(self):
+        pos_id = self.x*n+self.y
+        flag = 1 #当前不能够容忍的选择数
+        min_num = 40000
+        min_id = -1
+        while(min_id==-1):
+            for b in berth:
+                if(b.robots_nums>=flag):
+                    continue
+                if(pos_id not in b.all_path.keys()):
+                    continue
+                if(min_num>len(b.all_path[pos_id])):
+                    min_num = len(b.all_path[pos_id])
+                    min_id = b.id
+            flag+=1
+        Berth[min_id].robots_nums+=1
+        self.berth_id=min_id
+        
+        
+                
 
 
-robot = [Robot() for _ in range(robot_num + 10)]  # 机器人列表
-berth = []  # 泊位列表
-boat = []
+
+
+global robot 
+robot = [Robot() for _ in range(robot_num)] # 机器人列表
 
 
 def get_adjacent_table():
@@ -157,7 +180,7 @@ def bfs(start, goal):
 
 def find_all_paths(start):
     """
-    搜寻指定点到所有点的路径，这个用来处理港口的all_path字典，也是gpt4写的，没问题
+    搜寻指定点到所有点的路径，这个用来处理港口的all_path字典
     :param start: 指定点的编号
     :return: 返回一个字典，字典中的key表示地图中的某个点，value是一个列表，包含了start到key的最短路径
     """
@@ -631,6 +654,8 @@ if __name__ == "__main__":
         Input()
         Cargo_handling()
         for index in range(robot_num):
+            if(zhen==1):
+                robot[index].choose_berth()
             Robot_control(index)
 
         # 船先决策，港口最后决策
@@ -639,40 +664,6 @@ if __name__ == "__main__":
 
         for single_berth in berth:
             single_berth.boat_load(zhen)
-
-        # if zhen == 0:
-        #     print("ship", 0, 9)
-        #     sys.stdout.flush()
-        # if zhen == 1220:
-        #     print("go", 0)
-        #     sys.stdout.flush()
-        # # if zhen == 500:
-        # #     print("ship", 0, 8)
-        # #     sys.stdout.flush()
-        # if zhen < 22:
-        #     pass
-        # elif zhen >= 22 and zhen <= 35:
-        #     print("move", 8, 1)
-        #     sys.stdout.flush()
-        # elif zhen >= 36 and zhen <= 43:
-        #     print("move", 8, 3)
-        #     sys.stdout.flush()
-        #     if zhen == 43:
-        #         print("get", 8)
-        #         sys.stdout.flush()
-        # elif zhen >= 44 and zhen <= 58:
-        #     print("move", 8, 2)
-        #     # print("pull", 8)
-        #     sys.stdout.flush()
-        # elif zhen >= 59 and zhen <= 67:
-        #     print("move", 8, 1)
-        #     sys.stdout.flush()
-        #     if zhen == 67:
-        #         print("pull", 8)
-        #         sys.stdout.flush()
-        # else:
-        #     print("move", 8, 0)
-        #     sys.stdout.flush()
 
         print("OK")
         sys.stdout.flush()
