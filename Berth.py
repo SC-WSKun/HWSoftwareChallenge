@@ -11,7 +11,7 @@ class Berth:
         self.robot_arrive_time = -1 #机器人到达的时间
         self.all_path = {}  # 字典，(x,y)到所有点的路径，key是点的编号（number），value是(x,y)到这个点的最短路径，不连通的key不会出现在all_path中
         # 这个路径记录的是港口到点的路径，机器人要使用这个路径的话得对value进行逆转，即[::-1]
-        self.total_goods = deque([])  # 用队列记录当前的货物放置顺序，里面都是Goods对象
+        # self.total_goods = deque([])  # 用队列记录当前的货物放置顺序，里面都是Goods对象
         self.total_values = 0  # 当前港口上货物的总价值
         self.future_goods = {}  # 记录港口未来到达的货物，key是货物在那一帧到达，value是货物的价值
 
