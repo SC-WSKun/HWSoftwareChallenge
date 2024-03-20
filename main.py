@@ -91,7 +91,7 @@ class Berth:
         # 这个路径记录的是港口到点的路径，机器人要使用这个路径的话得对value进行逆转，即[::-1]
         self.total_goods = deque([])  # 用队列记录当前的货物放置顺序，里面都是Goods对象
         self.total_values = 0  # 当前港口上货物的总价值
-        self.future_goods = {}  # 记录港口未来到达的货物，key是机器人的编号，value是一个数组，包含：货物会在哪一帧到达，货物的价值
+        self.future_goods = {}  # 记录港口未来到达的货物，key是货物在那一帧到达，value是货物的价值
         # 假设机器人“移动前”距离目标位置的距离为a，当前帧是z，z+a-1就是货物到达的帧数；如果是“移动后”，那么在z+a帧才会到达
 
 
@@ -289,6 +289,7 @@ def Init():
         # berth[id].transport_time = berth_list[3]
         # berth[id].loading_speed = berth_list[4]
     boat_capacity = int(input())
+    
     okk = input()  # 初始化数据，以ok结束
 
     get_adjacent_table()
@@ -381,8 +382,8 @@ def Cargo_handling():
                 break
         # 港口
 
-        berth[robot_number].future_goods[robot_number] = [id + len(path) - 2, new_cargo[2]]
-        # berth[robot_number].robot_pull(id+len(path)-2)
+        # berth[robot_number].future_goods[robot_number] = [id + len(path) - 2, new_cargo[2]]
+        berth[robot_number].robot_pull(id+len(path)-2,new_cargo[2])
 
 
 def Robot_have_goods(index):
@@ -407,8 +408,8 @@ def Robot_have_goods(index):
                     break
             # 处理港口
             
-            # berth[index].total_goods.append(G)
-            # berth[index].total_values += G.value
+            berth[index].total_goods.append(G)
+            berth[index].total_values += G.value
             # del berth[index].future_goods[index]
 
             # 处理物品
@@ -436,13 +437,13 @@ def Robot_have_goods(index):
             print("move", index, movement_direction[a - robot[index].path[0]])
             robot[index].x, robot[index].y = coordinate_x, coordinate_y
             robot[index].path = berth[index].all_path[C_to_N(robot[index].x, robot[index].y)][::-1]
-            berth[index].future_goods[index][0] = id + len(robot[index].path) - 1
-            # berth[index].robot_undo(id + len(robot[index].path) - 1)
+            # berth[index].future_goods[index][0] = id + len(robot[index].path) - 1
+            berth[index].robot_undo(id + len(robot[index].path) - 1)
             tag = True
             break
     if tag == False:    # 说明机器人没有移动，此帧静止，那么只需要改变港口中的future_goods就可以了
-        berth[index].future_goods[index][0] += 1
-        # berth[index].robot_undo(boat[index].robort_arrive_time+1)
+        # berth[index].future_goods[index][0] += 1
+        berth[index].robot_undo(boat[index].robort_arrive_time+1)
 
 
 def Robot_donot_have_goods(index):
@@ -489,15 +490,15 @@ def Robot_donot_have_goods(index):
                     break
             if distance <= G.life:    # 还能继续拿这个货物
                 robot[index].path = path    # 机器人更新路径
-                berth[index].future_goods[index][0] += 2    # 通知港口晚两帧到
-                # berth[index].robot_undo(berth[index].robot_arrive_time+2)
+                # berth[index].future_goods[index][0] += 2    # 通知港口晚两帧到
+                berth[index].robot_undo(berth[index].robot_arrive_time+2)
             else:    # 拿不了这个货物了，机器人变成无目标货物状态
                 G.reserve = False
                 robot[index].path = []
                 robot[index].targetX = robot[index].targetY = -1
                 robot[index].targetValue = 0
-                del berth[index].future_goods[index]
-                # berth[index].robot_undo(-1)
+                # del berth[index].future_goods[index]
+                berth[index].robot_undo(-1)
             tag = True
             break
     if tag == False:    # 这个机器人在这一帧动不了，接下来判断原本的货物能不能拿
@@ -507,15 +508,15 @@ def Robot_donot_have_goods(index):
                 G = g
                 break
         if len(robot[index].path) <= G.life - 1:
-            berth[index].future_goods[index][0] += 1  # 通知港口晚一帧到
-            # berth[index].robot_undo(berth[index].robot_arrive_time+1)
+            # berth[index].future_goods[index][0] += 1  # 通知港口晚一帧到
+            berth[index].robot_undo(berth[index].robot_arrive_time+1)
         else:        # 拿不了这个货物了，机器人变成无目标货物状态
             G.reserve = False
             robot[index].path = []
             robot[index].targetX = robot[index].targetY = -1
             robot[index].targetValue = 0
-            del berth[index].future_goods[index]
-            # berth[index].robot_undo(-1)
+            # del berth[index].future_goods[index]
+            berth[index].robot_undo(-1)
 
 
 def Robot_control(index):
@@ -585,9 +586,11 @@ if __name__ == "__main__":
             Robot_control(index)
         
         #船先决策，港口最后决策
+        for single_boat in boats:
+            single_boat.next_step(zhen, berths)
 
-        for berth_index in range(len(Berths)):
-            Berths[berth_index].boat_load(zhen)
+        for berth in Berths:
+            berth.boat_load(zhen)
 
         # if zhen == 0:
         #     print("ship", 0, 9)
