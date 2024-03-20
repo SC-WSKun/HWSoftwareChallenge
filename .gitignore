@@ -1,9 +1,5 @@
 Demo
-maps
 replay
-replayer
-sdk
-PreliminaryJudge.exe
 run_simple_demo.bat
-test.py
+app/test.py
 邻接表.xlsx
