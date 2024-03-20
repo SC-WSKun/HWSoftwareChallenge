@@ -1,11 +1,11 @@
-
+import numpy as np
 class Berth:
     def __init__(self, x=0, y=0, transport_time=0, loading_speed=0):
         self.x = x
         self.y = y
         self.transport_time = transport_time
         self.loading_speed = loading_speed
-        self.nums = [0 for i in range(15000)]
+        self.nums = np.array([0 for i in range(15000)])
         self.boat = None # 最快到达港口的船
         self.status = 0 #0没有船要过来，1有船正在泊位上或者将要过来
         self.robot_arrive_time = -1 #机器人到达的时间
