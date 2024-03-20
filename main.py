@@ -289,7 +289,8 @@ def Init():
         # berth[id].transport_time = berth_list[3]
         # berth[id].loading_speed = berth_list[4]
     boat_capacity = int(input())
-    
+    #这里写船的初始化
+
     okk = input()  # 初始化数据，以ok结束
 
     get_adjacent_table()
@@ -312,8 +313,8 @@ def Input():
         goods.append(G)    # 把货物放到goods列表里面
     for i in range(robot_num):
         robot[i].goods, robot[i].x, robot[i].y, robot[i].status = map(int, input().split())
-    for i in range(5):
-        boat[i].status, boat[i].pos = map(int, input().split())
+    # for i in range(5):
+    #     boat[i].status, boat[i].pos = map(int, input().split())
     okk = input()
 
 
@@ -408,8 +409,8 @@ def Robot_have_goods(index):
                     break
             # 处理港口
             
-            berth[index].total_goods.append(G)
-            berth[index].total_values += G.value
+            # berth[index].total_goods.append(G)
+            # berth[index].total_values += G.value
             # del berth[index].future_goods[index]
 
             # 处理物品
