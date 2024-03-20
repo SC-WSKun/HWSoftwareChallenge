@@ -162,31 +162,29 @@ class Boat:
 
     def next_step(self, current_frame, berths):
         self.berths = berths
-        match self.status:
-            case 0:  # 船在虚拟点，需要前往泊位
-                (
-                    best_berth_id,
-                    leave_time,
-                ) = self.search_best_berth(current_frame).values()
-                print("ship", self.id, best_berth_id)
-                sys.stdout.flush()
-                self.berths[best_berth_id].boat_arrive(self.id)
-                self.arrive_time = (
-                    current_frame + self.berths[best_berth_id].transport_time
-                )
-                self.leave_time = leave_time
-                self.future_pos = best_berth_id
-            case 1:  # 船在前往泊位的途中（预留后续加入路径规划）
-                if current_frame == self.arrive_time - 1:
-                    self.status = 2
-                    self.pos = self.future_pos
-            case 2:  # 船在泊位上
-                return
-            case 3:  # 船在前往虚拟点的途中
-                if current_frame == self.arrive_time - 1:
-                    self.status = 0
-                    self.pos = -1
-                    self.goods = 0
+        if self.status == 0:
+            # 船在虚拟点，需要前往泊位
+            (
+                best_berth_id,
+                leave_time,
+            ) = self.search_best_berth(current_frame).values()
+            print("ship", self.id, best_berth_id)
+            sys.stdout.flush()
+            self.berths[best_berth_id].boat_arrive(self.id)
+            self.arrive_time = current_frame + self.berths[best_berth_id].transport_time
+            self.leave_time = leave_time
+            self.future_pos = best_berth_id
+        elif self.status == 1:  # 船在前往泊位的途中（预留后续加入路径规划）
+            if current_frame == self.arrive_time - 1:
+                self.status = 2
+                self.pos = self.future_pos
+        elif self.status == 2:  # 船在泊位上
+            return
+        elif self.status == 3:  # 船在前往虚拟点的途中
+            if current_frame == self.arrive_time - 1:
+                self.status = 0
+                self.pos = -1
+                self.goods = 0
 
 
 # 测试代码
