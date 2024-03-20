@@ -135,8 +135,10 @@ class Boat:
             self.future_pos = -1
             self.arrive_time = current_frame + self.berths[self.pos].transport_time
             print("go", self.id)
+            sys.stdout.flush()
         else:
             print("ship", self.id, best_berth_id)
+            sys.stdout.flush()
             self.berths[best_berth_id].boat_arrive(self.id, add_goods)
             self.arrive_time = current_frame + self.berths[best_berth_id].transport_time
             self.leave_time = leave_time
@@ -168,6 +170,7 @@ class Boat:
                     current_frame, 1
                 ).values()
                 print("ship", self.id, best_berth_id)
+                sys.stdout.flush()
                 self.berths[best_berth_id].boat_arrive(self.id)
                 self.arrive_time = (
                     current_frame + self.berths[best_berth_id].transport_time
