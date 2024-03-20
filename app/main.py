@@ -247,7 +247,7 @@ def Init():
     3. 对每个泊位的左上角点进行广度优先搜索，记录地图上每个点（海洋、障碍物除外）到这个最佳放置点的最短路径
     :return:
     """
-    global ch, berth, boat_capacity
+    global ch, berth, boat_capacity, boat
     for _ in range(0, n):  # 得到判题器的地图
         line = input()
         ch = np.append(ch, [np.fromiter(line, dtype="U1")], axis=0)
@@ -257,6 +257,7 @@ def Init():
         id = berth_list[0]
         berth.append(
             Berth(
+                id=i,
                 x=berth_list[1],
                 y=berth_list[2],
                 transport_time=berth_list[3],
@@ -269,7 +270,7 @@ def Init():
         # berth[id].loading_speed = berth_list[4]
     boat_capacity = int(input())
     # 这里写船的初始化
-    boats = [Boat(i, boat_capacity, -1) for i in range(5)]
+    boat = [Boat(i, boat_capacity, -1) for i in range(5)]
 
     okk = input()  # 初始化数据，以ok结束
 
@@ -296,9 +297,9 @@ def Input():
             int, input().split()
         )
     for i in range(5):
-         input()  # 船的信息，暂时不需要
-         continue
-         boat[i].status, boat[i].pos = map(int, input().split())
+        input()  # 船的信息，暂时不需要
+        continue
+        boat[i].status, boat[i].pos = map(int, input().split())
     okk = input()
 
 

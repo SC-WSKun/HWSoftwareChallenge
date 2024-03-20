@@ -1,10 +1,13 @@
 import sys
 
+from numpy import single
+from Berth import Berth
+
 berth_move_between = 500
 
 
 class Boat:
-    def __init__(self, id=0, num=0, pos=-1, status=0):
+    def __init__(self, id=0, num=0, pos=-1):
         self.id = id
         self.num = num  # 轮船的载货量
         self.goods = 0  # 轮船的当前货物量
@@ -21,7 +24,7 @@ class Boat:
         2: 船在泊位上
         3: 船在前往虚拟点的途中
         """
-        self.status = status
+        self.status = 0
 
     def search_best_berth(self, current_frame):
         """
@@ -68,10 +71,11 @@ class Boat:
                         1. 计算获取价值
                         """
                 single_value = 0
-                sort_keys = single_berth.wait_load_value.keys().sort()
+                # sort_keys = single_berth.future_goods.keys().sort()
+                sort_keys = sorted(single_berth.future_goods.keys())
                 for key in sort_keys:
                     if key <= arrive_time + deal_time:
-                        single_value = single_berth.wait_load_value[key]
+                        single_value = single_berth.future_goods[key]
                     else:
                         break
                 """
@@ -82,14 +86,12 @@ class Boat:
                     # best_deal_goods = leave_goods - arrive_goods
                     best_deal_time = deal_time
                     best_value = single_value
-            return {
-                "best_berth_id": best_berth.id,
-                "best_deal_time": best_deal_time,
-                "best_value": best_value,
-                "leave_time": current_frame
-                + best_berth.transport_time
-                + best_deal_time,
-            }
+        return {
+            "best_berth_id": best_berth.id,
+            "best_deal_time": best_deal_time,
+            "best_value": best_value,
+            "leave_time": current_frame + best_berth.transport_time + best_deal_time,
+        }
 
     def search_next_berth(self, current_frame):
         """
@@ -136,7 +138,7 @@ class Boat:
         else:
             print("ship", self.id, best_berth_id)
             sys.stdout.flush()
-            self.berths[best_berth_id].boat_arrive(self.id, add_goods)
+            self.berths[best_berth_id].boat_arrive(self)
             self.arrive_time = current_frame + self.berths[best_berth_id].transport_time
             self.leave_time = leave_time
             self.future_pos = best_berth_id
@@ -164,16 +166,16 @@ class Boat:
         self.berths = berths
         if self.status == 0:
             # 船在虚拟点，需要前往泊位
-            (
-                best_berth_id,
-                leave_time,
-            ) = self.search_best_berth(current_frame).values()
+            best_berth_id, best_deal_time, best_value, leave_time = (
+                self.search_best_berth(current_frame).values()
+            )
             print("ship", self.id, best_berth_id)
             sys.stdout.flush()
-            self.berths[best_berth_id].boat_arrive(self.id)
+            self.berths[best_berth_id].boat_arrive(self)
             self.arrive_time = current_frame + self.berths[best_berth_id].transport_time
             self.leave_time = leave_time
             self.future_pos = best_berth_id
+            self.status = 1
         elif self.status == 1:  # 船在前往泊位的途中（预留后续加入路径规划）
             if current_frame == self.arrive_time - 1:
                 self.status = 2
@@ -189,8 +191,14 @@ class Boat:
 
 # 测试代码
 if __name__ == "__main__":
-    boat = [Boat(i, 10, -1, 0) for i in range(10)]
-
+    boat = [Boat(i, 10, -1) for i in range(5)]
+    berth = [
+        Berth(boat, id=i, x=10, y=10, transport_time=10 * i, loading_speed=4 * i)
+        for i in range(10)
+    ]
+    for zhen in range(100):
+        for single_boat in boat:
+            single_boat.next_step(zhen, berth)
     # for current_frame in range(15000):
     #     for single_boat in boat:
     # single_boat.next_step(current_frame, [Berth(j) for j in range(10)])
