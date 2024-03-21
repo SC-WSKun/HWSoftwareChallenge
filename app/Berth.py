@@ -18,6 +18,8 @@ class Berth:
         self.total_values = 0  # 当前港口上货物的总价值
         self.future_goods = {}  # 记录港口未来到达的货物，key是货物在那一帧到达，value是货物的价值
         self.temp_boat = test_boat
+        self.robots_nums = 0 #选择这个港口的机器人数量
+    
 
     def robot_pull(self, time, value):  # 机器人放置物品到码头，time是机器人到达的时间
         self.nums[time:] += 1
@@ -43,15 +45,15 @@ class Berth:
             # 船没有离开，继续装货
             nums_arr = self.nums[current_time]
             load_nums = self.boat.load_goods(min(nums_arr, self.loading_speed))
-            self.nums[self.current_time :] -= load_nums
+            self.nums[current_time :] -= load_nums
             # 对价值进行更新
-            goods_key = self.future_goods.keys().sort()
+            goods_key = sorted(self.future_goods.keys())
             for i in range(load_nums):
                 del self.future_goods[goods_key[i]]
 
     def boat_leave(self, current_time):
         if self.nums[current_time] == 0 or self.boat.is_full():
-            self.boat.leave_berth(self, current_time)
+            self.boat.leave_berth(current_time)
             self.boat = None
             self.status = 0
             return True
