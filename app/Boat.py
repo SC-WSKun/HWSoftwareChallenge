@@ -199,7 +199,9 @@ class Boat:
 if __name__ == "__main__":
     boat = [Boat(i, 10, -1) for i in range(5)]
     berth = [
-        Berth(boat, id=i, x=10, y=10, transport_time=10 * i, loading_speed=4 * i)
+        Berth(
+            id=i, x=10, y=10, transport_time=10 * i, loading_speed=4 * i, test_boat=boat
+        )
         for i in range(10)
     ]
     for zhen in range(100):
