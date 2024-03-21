@@ -125,7 +125,7 @@ class Boat:
     """
 
     def leave_berth(self, current_frame):
-        best_berth_id, leave_time, add_goods = self.search_next_berth(
+        best_berth_id, best_deal_time, best_value, leave_time = self.search_next_berth(
             current_frame
         ).values()
         if best_berth_id == -1:
