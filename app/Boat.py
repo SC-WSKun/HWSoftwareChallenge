@@ -13,7 +13,6 @@ class Boat:
         self.goods = 0  # 轮船的当前货物量
         self.values = 0  # 轮船当前运载价值
         self.pos = pos  # 处在哪个泊位，虚拟点则为-1
-        self.future_pos = None  # 下一个位置
         self.arrive_time = 0  # 下一个位置的到达时间
         self.leave_time = 0  # 下一个位置的离开时间
         self.berths = []  # 船的泊位
@@ -36,14 +35,14 @@ class Boat:
         best_value = -1
         for single_berth in self.berths:
             """
-                    判断泊位有无船只，且非当前泊位
-                    """
+            判断泊位有无船只，且非当前泊位
+            """
             if single_berth.status == 1 or single_berth.id == self.pos:
                 continue
             else:
                 """
-                        计算装货时间
-                        """
+                计算装货时间
+                """
                 arrive_time = current_frame + single_berth.transport_time
                 # arrive_goods = self.goods
                 leave_goods = self.goods
@@ -131,7 +130,6 @@ class Boat:
         ).values()
         if best_berth_id == -1:
             self.status = 3
-            self.future_pos = -1
             self.arrive_time = current_frame + self.berths[self.pos].transport_time
             print("go", self.id)
             sys.stdout.flush()
@@ -141,7 +139,6 @@ class Boat:
             self.berths[best_berth_id].boat_arrive(self)
             self.arrive_time = current_frame + self.berths[best_berth_id].transport_time
             self.leave_time = leave_time
-            self.future_pos = best_berth_id
 
     """
     装货
@@ -164,29 +161,28 @@ class Boat:
 
     def next_step(self, current_frame, berths):
         self.berths = berths
-        if self.status == 0:
+        if self.pos == -1:
             # 船在虚拟点，需要前往泊位
             best_berth_id, best_deal_time, best_value, leave_time = (
                 self.search_best_berth(current_frame).values()
             )
             print("ship", self.id, best_berth_id)
             sys.stdout.flush()
+            self.goods = 0
             self.berths[best_berth_id].boat_arrive(self)
             self.arrive_time = current_frame + self.berths[best_berth_id].transport_time
             self.leave_time = leave_time
-            self.future_pos = best_berth_id
-            self.status = 1
-        elif self.status == 1:  # 船在前往泊位的途中（预留后续加入路径规划）
-            if current_frame == self.arrive_time - 1:
-                self.status = 2
-                self.pos = self.future_pos
-        elif self.status == 2:  # 船在泊位上
-            return
-        elif self.status == 3:  # 船在前往虚拟点的途中
-            if current_frame == self.arrive_time - 1:
-                self.status = 0
-                self.pos = -1
-                self.goods = 0
+        #     self.status = 1
+        # elif self.status == 1:  # 船在前往泊位的途中（预留后续加入路径规划）
+        #     if current_frame == self.arrive_time - 1:
+        #         self.status = 2
+        # elif self.status == 2:  # 船在泊位上
+        #     return
+        # elif self.status == 3:  # 船在前往虚拟点的途中
+        #     if current_frame == self.arrive_time - 1:
+        #         self.status = 0
+        #         self.pos = -1
+        #         self.goods = 0
 
 
 # 测试代码

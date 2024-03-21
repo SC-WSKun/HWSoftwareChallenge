@@ -335,7 +335,8 @@ def Input():
     for i in range(robot_num):
         robot[i].goods, robot[i].x, robot[i].y, robot[i].status = map(int, input().split())
     for i in range(5):
-        boat[i].status, boat[i].pos = map(int, input().split())
+        unusestate,boat[i].pos = map(int, input().split())    # 船的信息，只用到位置
+        # boat[i].status, boat[i].pos = map(int, input().split())
     okk = input()
 
 
