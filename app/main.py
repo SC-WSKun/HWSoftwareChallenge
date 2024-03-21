@@ -341,7 +341,7 @@ def Input():
     for i in range(robot_num):
         robot[i].goods, robot[i].x, robot[i].y, robot[i].status = map(int, input().split())
     for i in range(5):
-        unused_state,boat[i].pos = map(int, input().split())
+        input()
         # boat[i].status, boat[i].pos = map(int, input().split())
     okk = input()
 
@@ -425,24 +425,24 @@ def Robot_have_goods(index):
             break
     else:  # 能移动
 
-        # print("move", index, movement_direction[robot[index].path[1] - robot[index].path[0]])
+        print("move", index, movement_direction[robot[index].path[1] - robot[index].path[0]])
 
-        try:
-            print("move", index, movement_direction[robot[index].path[1] - robot[index].path[0]])
-        except:
-            ser = pd.Series([id] + robot[index].path)
-            ser.to_excel("robot_path.xlsx", index=True)
-            ser2 = pd.Series(robot[index].x*200+robot[index].y)
-            ser2.to_excel("robot_path222.xlsx", index=True)
-            ex = Exception("异常！！！")
-            raise ex
+        # try:
+        #     print("move", index, movement_direction[robot[index].path[1] - robot[index].path[0]])
+        # except:
+        #     ser = pd.Series([id] + robot[index].path)
+        #     ser.to_excel("robot_path.xlsx", index=True)
+        #     ser2 = pd.Series(robot[index].x*200+robot[index].y)
+        #     ser2.to_excel("robot_path222.xlsx", index=True)
+        #     ex = Exception("异常！！！")
+        #     raise ex
 
 
 
         # robot[index].path.pop(0)
         robot[index].pop()
         robot[index].x, robot[index].y = N_to_C(robot[index].path[0])
-        if ch[robot[index].x][robot[index].y] == 'B':  # 到港口了
+        if (robot[index].x, robot[index].y) == (berth[index].x, berth[index].y):
             print("pull", index)
             G = None
             for g in goods:  # 找到要放下的货物
@@ -586,14 +586,19 @@ def Robot_control(index):
             target_good = [0, -1, -1]  # 可能存在的目标货物，三个元素分别是：价值/货物到港口需要的距离、物品横坐标、物品纵坐标
             good_index = None  # 货物的索引
             for i, G in enumerate(goods):
-                if G.reserve == False:  # 这个货物没有被选中
-                    if C_to_N(G.x, G.y) not in berth[index].all_path:  # 无法到达这个货物，不连通，直接看下一个货物
-                        continue
-                    if G.value / (len(berth[index].all_path[C_to_N(G.x, G.y)]) - 1) > target_good[0]:  # 拿取这个货物G性价比更高，把相关信息记录下来
-                        target_good[0] = G.value / (len(berth[index].all_path[C_to_N(G.x, G.y)]) - 1)
-                        target_good[1] = G.x
-                        target_good[2] = G.y
-                        good_index = i
+                if G.reserve == True:  # 这个货物被选中了
+                    continue
+                if C_to_N(G.x, G.y) not in berth[index].all_path:  # 无法到达这个货物，不连通，直接看下一个货物
+                    continue
+                if (len(berth[index].all_path[C_to_N(robot[index].x, robot[index].y)]) + len(
+                        berth[index].all_path[C_to_N(G.x, G.y)]) - 2) > G.life:  # 这个货物生命值过低，拿不到
+                    continue
+                if G.value / (len(berth[index].all_path[C_to_N(G.x, G.y)]) - 1) > target_good[
+                    0]:  # 拿取这个货物G性价比更高，把相关信息记录下来
+                    target_good[0] = G.value / (len(berth[index].all_path[C_to_N(G.x, G.y)]) - 1)
+                    target_good[1] = G.x
+                    target_good[2] = G.y
+                    good_index = i
             if target_good[0] == 0:  # 搜寻不到合适的货物，这个机器人此帧不动
                 return
             # 搜寻到了合适的货物
