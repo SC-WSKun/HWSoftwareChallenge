@@ -101,6 +101,10 @@ class Robot:
             flag+=1
         Berth[min_id].robots_nums+=1
         self.berth_id=min_id
+    def pop(self):
+        self.path.pop(0)
+    def insert(self,number):
+        self.path.insert(0,number)
 
 global robot
 robot = [Robot() for _ in range(robot_num + 10)]  # 机器人列表
@@ -143,6 +147,8 @@ def get_adjacent_table():
                 adjacency_table[i * n + j].append((i - 1) * n + j)
                 adjacency_table[(i - 1) * n + j].append(i * n + j)
     adjacency_table = {key: value for key, value in adjacency_table.items() if len(value) > 0}  # 删除不和别的点相连的点
+    # ser_adj = pd.Series(adjacency_table)
+    # ser_adj.to_excel("adj.xlsx", index=True)
 
 
 def bfs(start, goal):
@@ -249,7 +255,7 @@ def Robot_Distance(index, i, j):
     if path1 == None:  # 找不到路径
         return [], float('inf')
     try:
-        path2 = berth[index].all_path[C_to_N(i, j)]
+        path2 = berth[index].all_path[C_to_N(i, j)][:]
         path2.pop()
         path2 = path2[::-1]
     except:  # 港口与物品之间不连通
@@ -335,7 +341,7 @@ def Input():
     for i in range(robot_num):
         robot[i].goods, robot[i].x, robot[i].y, robot[i].status = map(int, input().split())
     for i in range(5):
-        unusestate,boat[i].pos = map(int, input().split())    # 船的信息，只用到位置
+        input()
         # boat[i].status, boat[i].pos = map(int, input().split())
     okk = input()
 
@@ -419,19 +425,22 @@ def Robot_have_goods(index):
             break
     else:  # 能移动
 
-        print("move", index, movement_direction[robot[index].path[1] - robot[index].path[0]])
+        # print("move", index, movement_direction[robot[index].path[1] - robot[index].path[0]])
 
-        # try:
-        #     print("move", index, movement_direction[robot[index].path[1] - robot[index].path[0]])
-        # except:
-        #     ser = pd.Series([id] + robot[index].path)
-        #     ser.to_excel("robot_path.xlsx", index=True)
-        #     ex = Exception("异常！！！")
-        #     raise ex
+        try:
+            print("move", index, movement_direction[robot[index].path[1] - robot[index].path[0]])
+        except:
+            ser = pd.Series([id] + robot[index].path)
+            ser.to_excel("robot_path.xlsx", index=True)
+            ser2 = pd.Series(robot[index].x*200+robot[index].y)
+            ser2.to_excel("robot_path222.xlsx", index=True)
+            ex = Exception("异常！！！")
+            raise ex
 
 
 
-        robot[index].path.pop(0)
+        # robot[index].path.pop(0)
+        robot[index].pop()
         robot[index].x, robot[index].y = N_to_C(robot[index].path[0])
         if ch[robot[index].x][robot[index].y] == 'B':  # 到港口了
             print("pull", index)
@@ -469,7 +478,8 @@ def Robot_have_goods(index):
         else:  # 可以往a这个地方走
             print("move", index, movement_direction[a - robot[index].path[0]])
             robot[index].x, robot[index].y = coordinate_x, coordinate_y
-            robot[index].path.insert(0, a)
+            # robot[index].path.insert(0, a)
+            robot[index].insert(a)
             # berth[index].future_goods[index][0] += 2
             berth[index].robot_undo(berth[index].robot_arrive_time + 2)
             tag = True
@@ -485,7 +495,8 @@ def Robot_donot_have_goods(index):
             break
     else:  # 能移动
         print("move", index, movement_direction[robot[index].path[1] - robot[index].path[0]])
-        robot[index].path.pop(0)
+        # robot[index].path.pop(0)
+        robot[index].pop()
         robot[index].x, robot[index].y = N_to_C(robot[index].path[0])
         if robot[index].x == robot[index].targetX and robot[index].y == robot[index].targetY:  # 货物在脚下
             print("get", index)
@@ -513,7 +524,8 @@ def Robot_donot_have_goods(index):
         else:  # 可以往a这个地方走
             print("move", index, movement_direction[a - robot[index].path[0]])
             robot[index].x, robot[index].y = coordinate_x, coordinate_y
-            robot[index].path.insert(0, a)
+            # robot[index].path.insert(0, a)
+            robot[index].insert(a)
             G = None  # 用G来存储当前机器人原本打算取的货物
             for g in goods:
                 if g.x == robot[index].targetX and g.y == robot[index].targetY:
@@ -630,12 +642,12 @@ if __name__ == "__main__":
             #     robot[index].choose_berth()
             Robot_control(index)
 
-        # 船先决策，港口最后决策
-        for single_boat in boat:
-            single_boat.next_step(zhen, berth)
+        # # 船先决策，港口最后决策
+        # for single_boat in boat:
+        #     single_boat.next_step(zhen, berth)
 
-        for single_berth in berth:
-            single_berth.boat_load(zhen)
+        # for single_berth in berth:
+        #     single_berth.boat_load(zhen)
 
         print("OK")
         sys.stdout.flush()
