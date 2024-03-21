@@ -97,7 +97,12 @@ class Boat:
         装满就走
         """
         if self.goods == self.num:
-            return {"best_berth_id": -1}
+            return {
+                "best_berth_id": -1,
+                "best_deal_time": 0,
+                "best_value": 0,
+                "leave_time": 0,
+            }
         """
         判断返回虚拟点还是下一个泊位
         """
@@ -111,7 +116,12 @@ class Boat:
             + best_deal_time
             + self.berths[best_berth_id].transport_time
         ):
-            return {"best_berth_id": -1}
+            return {
+                "best_berth_id": -1,
+                "best_deal_time": 0,
+                "best_value": 0,
+                "leave_time": 0,
+            }
         else:
             return {
                 "best_berth_id": best_berth_id,
