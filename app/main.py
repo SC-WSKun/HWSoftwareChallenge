@@ -42,7 +42,8 @@ boat_capacity = 0  # 船的容积
 id = 0  # 当前的帧数，最新版的判题器是1到15000帧
 
 ch = np.empty((0, n), dtype="U1")  # 二维列表组成的地图
-
+limit_berth = 10
+berth_benefit = {}
 
 """
 从一个点移动到另一个点，假设前一个点的编号（是编号不是坐标）是a，后一个点的编号是b，a移动到b
@@ -87,7 +88,8 @@ class Robot:
         min_num = 40000
         min_id = -1
         while min_id == -1:
-            for b in berth:
+            for k in berth.keys():
+                b = berth[k]
                 if b.robots_nums >= flag:
                     continue
                 if pos_id not in b.all_path.keys():
@@ -298,7 +300,8 @@ def Init():
     :return:
     """
     global ch, berth, boat_capacity, boat
-    berth = []
+    tmp_berth = []
+    berth = {}
     for _ in range(0, n):  # 得到判题器的地图
         line = input()
         ch = np.append(ch, [np.fromiter(line, dtype="U1")], axis=0)
@@ -310,7 +313,7 @@ def Init():
         # berth[id].y = berth_list[2]
         # berth[id].transport_time = berth_list[3]
         # berth[id].loading_speed = berth_list[4]
-        berth.append(
+        tmp_berth.append(
             Berth(
                 id=i,
                 x=berth_list[1],
@@ -319,13 +322,17 @@ def Init():
                 loading_speed=berth_list[4],
             )
         )
+        berth_benefit[tmp_berth[i].benefit]=i
+    benefit_key = sorted(berth_benefit.keys(),reverse = True)
+    for i in range(limit_berth):
+        b_id = berth_benefit[benefit_key[i]]
+        berth[b_id] = tmp_berth[b_id]
     boat_capacity = int(input())
     boat = [Boat(i, boat_capacity, -1) for i in range(5)]
     okk = input()  # 初始化数据，以ok结束
 
     get_adjacent_table()
-
-    for i in range(berth_num):  # 处理港口的all_path
+    for i in berth.keys():  # 处理港口的all_path
         berth[i].all_path = find_all_paths(C_to_N(berth[i].x, berth[i].y))
 
     print("OK")  # 返回ok，告诉判题器比赛开始
@@ -421,6 +428,97 @@ def Cargo_handling():
         berth[robot_number].robot_pull(id + len(path) - 2, new_cargo[2])
 
 
+# def Robot_have_goods(index):
+#     """
+#     机器人手上有货物的情况
+#     :param index:机器人的编号
+#     :return:
+#     """
+#     for i in range(
+#         robot_num
+#     ):  # robot[index].path[1]记录的是当前这个机器人要走的下一个地方，这个for循环用于判断能不能按照既定路线移动
+#         if N_to_C(robot[index].path[1]) == (robot[i].x, robot[i].y):
+#             break
+#     else:  # 能移动
+#         print(
+#             "move",
+#             index,
+#             movement_direction[robot[index].path[1] - robot[index].path[0]],
+#         )
+
+#         # try:
+#         #     print("move", index, movement_direction[robot[index].path[1] - robot[index].path[0]])
+#         # except:
+#         #     ser = pd.Series([id] + robot[index].path)
+#         #     ser.to_excel("robot_path.xlsx", index=True)
+#         #     ser2 = pd.Series(robot[index].x*200+robot[index].y)
+#         #     ser2.to_excel("robot_path222.xlsx", index=True)
+#         #     ex = Exception("异常！！！")
+#         #     raise ex
+
+#         berth_index = robot[index].berth_id
+#         robot[index].pop()
+#         robot[index].x, robot[index].y = N_to_C(robot[index].path[0])
+#         if (robot[index].x, robot[index].y) == (
+#             berth[berth_index].x,
+#             berth[berth_index].y,
+#         ):
+#             print("pull", index)
+#             G = None
+#             for g in goods:  # 找到要放下的货物
+#                 if g.x == robot[index].targetX and g.y == robot[index].targetY:
+#                     G = g
+#                     break
+#             # 处理港口
+#             # berth[index].total_goods.append(G)
+#             # berth[index].total_values += G.value
+#             # if index in berth[index].future_goods:
+#             #     del berth[index].future_goods[index]
+#             # 处理物品
+#             goods.remove(G)
+#             # 处理机器人
+#             robot[index].goods = 0
+#             robot[index].path = []
+#             robot[index].targetX = robot[index].targetY = -1
+#             robot[index].targetValue = 0
+#         return
+#     # 不能移动
+#     direction = [
+#         robot[index].path[0] - n,
+#         robot[index].path[0] - 1,
+#         robot[index].path[0] + 1,
+#         robot[index].path[0] + n,
+#     ]
+#     direction.remove(robot[index].path[1])
+#     tag = False  # 机器人能移动，就为True，不能移动，就为False
+#     while direction != []:  # 检验另外三个方向还能不能走，能走就走
+#         a = random.choice(direction)  # 随机往一个方向走，a是接下来要走的编号
+#         direction.remove(a)
+#         coordinate_x, coordinate_y = N_to_C(a)  # 接下来要走的坐标
+#         if (
+#             ch[coordinate_x][coordinate_y] == "*"
+#             or ch[coordinate_x][coordinate_y] == "#"
+#         ):  # 海洋和障碍不能走
+#             continue
+#         for i in range(robot_num):  # 检验如果那样走的话会不会和别的机器人碰撞
+#             if (coordinate_x, coordinate_y) == (robot[i].x, robot[i].y):
+#                 break
+#         else:  # 可以往a这个地方走
+#             print("move", index, movement_direction[a - robot[index].path[0]])
+#             robot[index].x, robot[index].y = coordinate_x, coordinate_y
+#             # robot[index].path.insert(0, a)
+#             robot[index].insert(a)
+#             # berth[index].future_goods[index][0] += 2
+#             berth_index = robot[index].berth_id
+#             berth[berth_index].robot_undo(berth[berth_index].robot_arrive_time + 2)
+#             tag = True
+#             break
+#     if (
+#         tag == False
+#     ):  # 说明机器人没有移动，此帧静止，那么只需要改变港口中的future_goods就可以了
+#         # berth[index].future_goods[index][0] += 1
+#         berth[berth_index].robot_undo(berth[berth_index].robot_arrive_time + 1)
+
 def Robot_have_goods(index):
     """
     机器人手上有货物的情况
@@ -428,7 +526,7 @@ def Robot_have_goods(index):
     :return:
     """
     for i in range(
-        robot_num
+            robot_num
     ):  # robot[index].path[1]记录的是当前这个机器人要走的下一个地方，这个for循环用于判断能不能按照既定路线移动
         if N_to_C(robot[index].path[1]) == (robot[i].x, robot[i].y):
             break
@@ -439,41 +537,40 @@ def Robot_have_goods(index):
             movement_direction[robot[index].path[1] - robot[index].path[0]],
         )
 
-        # try:
-        #     print("move", index, movement_direction[robot[index].path[1] - robot[index].path[0]])
-        # except:
-        #     ser = pd.Series([id] + robot[index].path)
-        #     ser.to_excel("robot_path.xlsx", index=True)
-        #     ser2 = pd.Series(robot[index].x*200+robot[index].y)
-        #     ser2.to_excel("robot_path222.xlsx", index=True)
-        #     ex = Exception("异常！！！")
-        #     raise ex
-
         berth_index = robot[index].berth_id
         robot[index].pop()
         robot[index].x, robot[index].y = N_to_C(robot[index].path[0])
         if (robot[index].x, robot[index].y) == (
-            berth[berth_index].x,
-            berth[berth_index].y,
-        ):
+                berth[berth_index].x,
+                berth[berth_index].y,
+        ):    # 机器人到港口左上角了
             print("pull", index)
-            G = None
-            for g in goods:  # 找到要放下的货物
-                if g.x == robot[index].targetX and g.y == robot[index].targetY:
-                    G = g
-                    break
-            # 处理港口
-            # berth[index].total_goods.append(G)
-            # berth[index].total_values += G.value
-            # if index in berth[index].future_goods:
-            #     del berth[index].future_goods[index]
-            # 处理物品
-            goods.remove(G)
-            # 处理机器人
+            goods.remove(robot[index].Goods)
             robot[index].goods = 0
             robot[index].path = []
-            robot[index].targetX = robot[index].targetY = -1
-            robot[index].targetValue = 0
+            robot[index].Goods = None
+
+
+            # G = None
+            # for g in goods:  # 找到要放下的货物
+            #     if g.x == robot[index].targetX and g.y == robot[index].targetY:
+            #         G = g
+            #         break
+            # # 处理港口
+            # # berth[index].total_goods.append(G)
+            # # berth[index].total_values += G.value
+            # # if index in berth[index].future_goods:
+            # #     del berth[index].future_goods[index]
+            # # 处理物品
+            # goods.remove(G)
+            # # 处理机器人
+            # robot[index].goods = 0
+            # robot[index].path = []
+            # robot[index].targetX = robot[index].targetY = -1
+            # robot[index].targetValue = 0
+
+
+
         return
     # 不能移动
     direction = [
@@ -484,13 +581,14 @@ def Robot_have_goods(index):
     ]
     direction.remove(robot[index].path[1])
     tag = False  # 机器人能移动，就为True，不能移动，就为False
+    berth_index = robot[index].berth_id
     while direction != []:  # 检验另外三个方向还能不能走，能走就走
         a = random.choice(direction)  # 随机往一个方向走，a是接下来要走的编号
         direction.remove(a)
         coordinate_x, coordinate_y = N_to_C(a)  # 接下来要走的坐标
         if (
-            ch[coordinate_x][coordinate_y] == "*"
-            or ch[coordinate_x][coordinate_y] == "#"
+                ch[coordinate_x][coordinate_y] == "*"
+                or ch[coordinate_x][coordinate_y] == "#"
         ):  # 海洋和障碍不能走
             continue
         for i in range(robot_num):  # 检验如果那样走的话会不会和别的机器人碰撞
@@ -502,20 +600,109 @@ def Robot_have_goods(index):
             # robot[index].path.insert(0, a)
             robot[index].insert(a)
             # berth[index].future_goods[index][0] += 2
-            berth_index = robot[index].berth_id
             berth[berth_index].robot_undo(berth[berth_index].robot_arrive_time + 2)
             tag = True
             break
     if (
-        tag == False
+            tag == False
     ):  # 说明机器人没有移动，此帧静止，那么只需要改变港口中的future_goods就可以了
         # berth[index].future_goods[index][0] += 1
         berth[berth_index].robot_undo(berth[berth_index].robot_arrive_time + 1)
 
 
+# def Robot_donot_have_goods(index):
+#     for i in range(
+#         robot_num
+#     ):  # robot[index].path[1]记录的是当前这个机器人要走的下一个地方
+#         if N_to_C(robot[index].path[1]) == (robot[i].x, robot[i].y):
+#             break
+#     else:  # 能移动
+#         print(
+#             "move",
+#             index,
+#             movement_direction[robot[index].path[1] - robot[index].path[0]],
+#         )
+#         # robot[index].path.pop(0)
+#         robot[index].pop()
+#         robot[index].x, robot[index].y = N_to_C(robot[index].path[0])
+#         if (
+#             robot[index].x == robot[index].targetX
+#             and robot[index].y == robot[index].targetY
+#         ):  # 货物在脚下
+#             print("get", index)
+#             G = None
+#             for g in goods:
+#                 if g.x == robot[index].targetX and g.y == robot[index].targetY:
+#                     G = g
+#                     break
+#             G.is_carried = True
+#             robot[index].goods = 1
+#         return
+#     # 不能移动
+#     direction = [
+#         robot[index].path[0] - n,
+#         robot[index].path[0] - 1,
+#         robot[index].path[0] + 1,
+#         robot[index].path[0] + n,
+#     ]
+#     direction.remove(robot[index].path[1])
+#     tag = False  # 机器人能移动，就为True，不能移动，就为False
+#     while direction != []:  # 检验另外三个方向还能不能走，能走就走
+#         a = random.choice(direction)  # 随机往一个方向走，a是接下来要走的编号
+#         direction.remove(a)
+#         coordinate_x, coordinate_y = N_to_C(a)  # 接下来要走的坐标
+#         if (
+#             ch[coordinate_x][coordinate_y] == "*"
+#             or ch[coordinate_x][coordinate_y] == "#"
+#         ):  # 海洋和障碍不能走
+#             continue
+#         for i in range(robot_num):  # 检验如果那样走的话会不会和别的机器人碰撞
+#             if (coordinate_x, coordinate_y) == (robot[i].x, robot[i].y):
+#                 break
+#         else:  # 可以往a这个地方走
+#             print("move", index, movement_direction[a - robot[index].path[0]])
+#             robot[index].x, robot[index].y = coordinate_x, coordinate_y
+#             robot[index].insert(a)
+#             G = None  # 用G来存储当前机器人原本打算取的货物
+#             berth_index = robot[index].berth_id
+#             for g in goods:
+#                 if g.x == robot[index].targetX and g.y == robot[index].targetY:
+#                     G = g
+#                     break
+#             if (len(robot[index].path) - 1) <= (G.life - 1):  # 还能继续拿这个货物
+#                 # berth[index].future_goods[index][0] += 2  # 通知港口晚两帧到
+
+#                 berth[berth_index].robot_undo(berth[berth_index].robot_arrive_time + 2)
+#             else:  # 拿不了这个货物了，机器人变成无目标货物状态
+#                 G.reserve = False
+#                 robot[index].path = []
+#                 robot[index].targetX = robot[index].targetY = -1
+#                 robot[index].targetValue = 0
+#                 if index in berth[berth_index].future_goods:
+#                     berth[berth_index].robot_undo(-1)
+#             tag = True
+#             break
+#     if tag == False:  # 这个机器人在这一帧动不了，接下来判断原本的货物能不能拿
+#         G = None  # 用G来存储当前机器人原本打算取的货物
+#         berth_index = robot[index].berth_id
+#         for g in goods:  # 找到原本要拿的货物
+#             if g.x == robot[index].targetX and g.y == robot[index].targetY:
+#                 G = g
+#                 break
+#         if len(robot[index].path) <= (G.life - 1):
+#             # berth[index].future_goods[index][0] += 1  # 通知港口晚一帧到
+#             berth[berth_index].robot_undo(berth[berth_index].robot_arrive_time + 1)
+#         else:  # 拿不了这个货物了，机器人变成无目标货物状态
+#             G.reserve = False
+#             robot[index].path = []
+#             robot[index].targetX = robot[index].targetY = -1
+#             robot[index].targetValue = 0
+#             if index in berth[berth_index].future_goods:
+#                 # del berth[index].future_goods[index]
+#                 berth[berth_index].robot_undo(-1)
 def Robot_donot_have_goods(index):
     for i in range(
-        robot_num
+            robot_num
     ):  # robot[index].path[1]记录的是当前这个机器人要走的下一个地方
         if N_to_C(robot[index].path[1]) == (robot[i].x, robot[i].y):
             break
@@ -528,18 +715,23 @@ def Robot_donot_have_goods(index):
         # robot[index].path.pop(0)
         robot[index].pop()
         robot[index].x, robot[index].y = N_to_C(robot[index].path[0])
-        if (
-            robot[index].x == robot[index].targetX
-            and robot[index].y == robot[index].targetY
-        ):  # 货物在脚下
+        if (robot[index].x, robot[index].y) == (robot[index].Goods.x, robot[index].Goods.y):    # 货物在脚下
             print("get", index)
-            G = None
-            for g in goods:
-                if g.x == robot[index].targetX and g.y == robot[index].targetY:
-                    G = g
-                    break
-            G.is_carried = True
+            robot[index].Goods.is_carried = True
             robot[index].goods = 1
+
+        # if (
+        #         robot[index].x == robot[index].targetX
+        #         and robot[index].y == robot[index].targetY
+        # ):  # 货物在脚下
+        #     print("get", index)
+        #     G = None
+        #     for g in goods:
+        #         if g.x == robot[index].targetX and g.y == robot[index].targetY:
+        #             G = g
+        #             break
+        #     G.is_carried = True
+        #     robot[index].goods = 1
         return
     # 不能移动
     direction = [
@@ -555,8 +747,8 @@ def Robot_donot_have_goods(index):
         direction.remove(a)
         coordinate_x, coordinate_y = N_to_C(a)  # 接下来要走的坐标
         if (
-            ch[coordinate_x][coordinate_y] == "*"
-            or ch[coordinate_x][coordinate_y] == "#"
+                ch[coordinate_x][coordinate_y] == "*"
+                or ch[coordinate_x][coordinate_y] == "#"
         ):  # 海洋和障碍不能走
             continue
         for i in range(robot_num):  # 检验如果那样走的话会不会和别的机器人碰撞
@@ -566,52 +758,159 @@ def Robot_donot_have_goods(index):
             print("move", index, movement_direction[a - robot[index].path[0]])
             robot[index].x, robot[index].y = coordinate_x, coordinate_y
             robot[index].insert(a)
-            G = None  # 用G来存储当前机器人原本打算取的货物
             berth_index = robot[index].berth_id
-            for g in goods:
-                if g.x == robot[index].targetX and g.y == robot[index].targetY:
-                    G = g
-                    break
-            if (len(robot[index].path) - 1) <= (G.life - 1):  # 还能继续拿这个货物
-                # berth[index].future_goods[index][0] += 2  # 通知港口晚两帧到
-
+            if (len(robot[index].path) - 1) <= (robot[index].Goods.life - 1):  # 还能继续拿这个货物
                 berth[berth_index].robot_undo(berth[berth_index].robot_arrive_time + 2)
             else:  # 拿不了这个货物了，机器人变成无目标货物状态
-                G.reserve = False
+                robot[index].Goods.reserve = False
                 robot[index].path = []
-                robot[index].targetX = robot[index].targetY = -1
-                robot[index].targetValue = 0
+                robot[index].Goods = None
                 if index in berth[berth_index].future_goods:
                     berth[berth_index].robot_undo(-1)
             tag = True
             break
+
+
+            # G = None  # 用G来存储当前机器人原本打算取的货物
+            # berth_index = robot[index].berth_id
+            # for g in goods:
+            #     if g.x == robot[index].targetX and g.y == robot[index].targetY:
+            #         G = g
+            #         break
+            # if (len(robot[index].path) - 1) <= (G.life - 1):  # 还能继续拿这个货物
+            #     # berth[index].future_goods[index][0] += 2  # 通知港口晚两帧到
+            #
+            #     berth[berth_index].robot_undo(berth[berth_index].robot_arrive_time + 2)
+            # else:  # 拿不了这个货物了，机器人变成无目标货物状态
+            #     G.reserve = False
+            #     robot[index].path = []
+            #     robot[index].targetX = robot[index].targetY = -1
+            #     robot[index].targetValue = 0
+            #     if index in berth[berth_index].future_goods:
+            #         berth[berth_index].robot_undo(-1)
+            # tag = True
+            # break
+
+
     if tag == False:  # 这个机器人在这一帧动不了，接下来判断原本的货物能不能拿
-        G = None  # 用G来存储当前机器人原本打算取的货物
         berth_index = robot[index].berth_id
-        for g in goods:  # 找到原本要拿的货物
-            if g.x == robot[index].targetX and g.y == robot[index].targetY:
-                G = g
-                break
-        if len(robot[index].path) <= (G.life - 1):
+        if (len(robot[index].path) - 1) <= (robot[index].Goods.life - 1):
             # berth[index].future_goods[index][0] += 1  # 通知港口晚一帧到
             berth[berth_index].robot_undo(berth[berth_index].robot_arrive_time + 1)
-        else:  # 拿不了这个货物了，机器人变成无目标货物状态
-            G.reserve = False
+        else:
+            robot[index].Goods.reserve = False
             robot[index].path = []
-            robot[index].targetX = robot[index].targetY = -1
-            robot[index].targetValue = 0
+            robot[index].Goods = None
             if index in berth[berth_index].future_goods:
                 # del berth[index].future_goods[index]
                 berth[berth_index].robot_undo(-1)
 
 
+# def Robot_control(index):
+#     global BFS_NUMBER
+#     berth_index = robot[index].berth_id
+#     if robot[index].status == 0:  # 机器人处于恢复状态，动不了
+#         # 当前的算法不完善
+#         if (
+#             robot[index].path != [] and robot[index].goods == 0
+#         ):  # 机器人有目标货物但是手上没货物
+#             for G in goods:  # 找到目标货物
+#                 if G.x == robot[index].targetX and G.y == robot[index].targetY:
+#                     G.reserve = False
+#                     break
+#         robot[index].path = []
+#         robot[index].targetX = robot[index].targetY = -1
+#         robot[index].targetValue = 0
+#         if index in berth[berth_index].future_goods:
+#             # del berth[index].future_goods[index]
+#             berth[berth_index].robot_undo(-1)
+#         return
+#     if robot[index].goods == 0:  # 无货物
+#         if robot[index].path == []:  # 无目标货物
+#             if BFS_NUMBER > BFS_LIMINATION:
+#                 return
+#             target_good = [
+#                 0,
+#                 -1,
+#                 -1,
+#             ]  # 可能存在的目标货物，三个元素分别是：价值/货物到港口需要的距离、物品横坐标、物品纵坐标
+#             good_index = None  # 货物的索引
+#             for i, G in enumerate(goods):
+#                 if G.reserve == True:  # 这个货物被选中了
+#                     continue
+#                 if (
+#                     C_to_N(G.x, G.y) not in berth[berth_index].all_path
+#                 ):  # 无法到达这个货物，不连通，直接看下一个货物
+#                     continue
+#                 if (
+#                     len(
+#                         berth[berth_index].all_path[
+#                             C_to_N(robot[index].x, robot[index].y)
+#                         ]
+#                     )
+#                     + len(berth[berth_index].all_path[C_to_N(G.x, G.y)])
+#                     - 2
+#                 ) > G.life:  # 这个货物生命值过低，拿不到
+#                     continue
+#                 if (
+#                     G.value / (len(berth[berth_index].all_path[C_to_N(G.x, G.y)]) - 1)
+#                     > target_good[0]
+#                 ):  # 拿取这个货物G性价比更高，把相关信息记录下来
+#                     target_good[0] = G.value / (
+#                         len(berth[berth_index].all_path[C_to_N(G.x, G.y)]) - 1
+#                     )
+#                     target_good[1] = G.x
+#                     target_good[2] = G.y
+#                     good_index = i
+#             if target_good[0] == 0:  # 搜寻不到合适的货物，这个机器人此帧不动
+#                 return
+#             # 搜寻到了合适的货物
+#             BFS_NUMBER += 1
+#             # 机器人
+#             # robot[index].path, final_distance = Robot_Distance(
+#             #     index, goods[good_index].x, goods[good_index].y
+#             # )
+#             path1 = berth[berth_index].all_path[C_to_N(robot[index].x, robot[index].y)][:]
+#             path1 = path1[::-1]
+#             # path2是港口到货物，港口的点编号和货物的点编号去掉（即去掉首尾），path3是货物到港口
+#             path2 = berth[berth_index].all_path[C_to_N(goods[good_index].x, goods[good_index].y)][:]
+#             path3 = path2[:][::-1]
+#             path2.pop(0)
+#             path2.pop()
+#             robot[index].path = path1 + path2 + path3
+#             final_distance = len(robot[index].path)
+
+#             robot[index].targetValue = goods[good_index].value
+#             robot[index].targetX = target_good[1]
+#             robot[index].targetY = target_good[2]
+#             # 物品
+#             goods[good_index].reserve = True
+#             # 港口
+#             # berth[index].future_goods[index] = [id + final_distance - 1, goods[good_index].value]
+#             berth[berth_index].robot_pull(
+#                 id + final_distance - 1, goods[good_index].value
+#             )
+#             if (
+#                 robot[index].x == robot[index].targetX
+#                 and robot[index].y == robot[index].targetY
+#             ):  # 货物就在机器人脚下
+#                 print("get", index)
+#                 goods[good_index].is_carried = True
+#                 robot[index].goods = 1
+#                 Robot_have_goods(index)
+#             else:  # 货物不在机器人脚下
+#                 Robot_donot_have_goods(index)
+#         else:  # 有目标货物
+#             Robot_donot_have_goods(index)
+#     else:  # 有货物
+#         Robot_have_goods(index)
 def Robot_control(index):
     global BFS_NUMBER
     berth_index = robot[index].berth_id
     if robot[index].status == 0:  # 机器人处于恢复状态，动不了
         # 当前的算法不完善
         if (
-            robot[index].path != [] and robot[index].goods == 0
+                robot[index].path != [] and robot[index].goods == 0
         ):  # 机器人有目标货物但是手上没货物
             for G in goods:  # 找到目标货物
                 if G.x == robot[index].targetX and G.y == robot[index].targetY:
@@ -626,65 +925,63 @@ def Robot_control(index):
         return
     if robot[index].goods == 0:  # 无货物
         if robot[index].path == []:  # 无目标货物
-            if BFS_NUMBER > BFS_LIMINATION:
-                return
-            target_good = [
-                0,
-                -1,
-                -1,
-            ]  # 可能存在的目标货物，三个元素分别是：价值/货物到港口需要的距离、物品横坐标、物品纵坐标
-            good_index = None  # 货物的索引
-            for i, G in enumerate(goods):
-                if G.reserve == True:  # 这个货物被选中了
+            max_cost_performance = 0
+            cargo = None
+            for i in range(len(goods)):
+                if goods[i].reserve == True:  # 这个货物被选中了
+                    continue
+                if (C_to_N(goods[i].x, goods[i].y)) not in berth[berth_index].all_path:
+                    # 无法到达这个货物，不连通，直接看下一个货物
                     continue
                 if (
-                    C_to_N(G.x, G.y) not in berth[berth_index].all_path
-                ):  # 无法到达这个货物，不连通，直接看下一个货物
+                        len(
+                            berth[berth_index].all_path[
+                                C_to_N(robot[index].x, robot[index].y)
+                            ]
+                        )
+                        + len(berth[berth_index].all_path[C_to_N(goods[i].x, goods[i].y)])
+                        - 2
+                ) > goods[i].life:  # 这个货物生命值过低，拿不到
                     continue
                 if (
-                    len(
-                        berth[berth_index].all_path[
-                            C_to_N(robot[index].x, robot[index].y)
-                        ]
-                    )
-                    + len(berth[berth_index].all_path[C_to_N(G.x, G.y)])
-                    - 2
-                ) > G.life:  # 这个货物生命值过低，拿不到
-                    continue
-                if (
-                    G.value / (len(berth[berth_index].all_path[C_to_N(G.x, G.y)]) - 1)
-                    > target_good[0]
+                        goods[i].value / (len(berth[berth_index].all_path[C_to_N(goods[i].x, goods[i].y)]) - 1)
+                        > max_cost_performance
                 ):  # 拿取这个货物G性价比更高，把相关信息记录下来
-                    target_good[0] = G.value / (
-                        len(berth[berth_index].all_path[C_to_N(G.x, G.y)]) - 1
+                    max_cost_performance = goods[i].value / (
+                            len(berth[berth_index].all_path[C_to_N(goods[i].x, goods[i].y)]) - 1
                     )
-                    target_good[1] = G.x
-                    target_good[2] = G.y
-                    good_index = i
-            if target_good[0] == 0:  # 搜寻不到合适的货物，这个机器人此帧不动
+                    cargo = goods[i]
+            if cargo == None:  # 搜寻不到合适的货物，这个机器人此帧不动
                 return
-            # 搜寻到了合适的货物
-            BFS_NUMBER += 1
+
+
+
             # 机器人
-            robot[index].path, final_distance = Robot_Distance(
-                index, goods[good_index].x, goods[good_index].y
-            )
-            robot[index].targetValue = goods[good_index].value
-            robot[index].targetX = target_good[1]
-            robot[index].targetY = target_good[2]
+            # path1是机器人到港口（首尾都保留）
+            path1 = berth[berth_index].all_path[C_to_N(robot[index].x, robot[index].y)][:]
+            path1 = path1[::-1]
+            # path2是港口到货物，港口的点编号和货物的点编号去掉（即去掉首尾），path3是货物到港口
+            path2 = berth[berth_index].all_path[C_to_N(cargo.x, cargo.y)][:]
+            path3 = path2[:][::-1]
+            path2.pop(0)
+            path2.pop()
+            robot[index].path = path1 + path2 + path3
+            final_distance = len(robot[index].path) - 1
+
+            robot[index].Goods = cargo
+
             # 物品
-            goods[good_index].reserve = True
+            cargo.reserve = True
             # 港口
             # berth[index].future_goods[index] = [id + final_distance - 1, goods[good_index].value]
             berth[berth_index].robot_pull(
-                id + final_distance - 1, goods[good_index].value
+                id + final_distance - 1, cargo.value
             )
-            if (
-                robot[index].x == robot[index].targetX
-                and robot[index].y == robot[index].targetY
-            ):  # 货物就在机器人脚下
+
+
+            if (robot[index].x, robot[index].y) == (cargo.x, cargo.y):  # 货物就在机器人脚下
                 print("get", index)
-                goods[good_index].is_carried = True
+                cargo.is_carried = True
                 robot[index].goods = 1
                 Robot_have_goods(index)
             else:  # 货物不在机器人脚下
@@ -693,6 +990,8 @@ def Robot_control(index):
             Robot_donot_have_goods(index)
     else:  # 有货物
         Robot_have_goods(index)
+
+
 
 
 if __name__ == "__main__":
@@ -720,8 +1019,8 @@ if __name__ == "__main__":
         for single_boat in boat:
             single_boat.next_step(zhen, berth)
 
-        for single_berth in berth:
-            single_berth.boat_load(zhen)
+        for k in berth.keys():
+            berth[k].boat_load(zhen)
 
         print("OK")
         sys.stdout.flush()
