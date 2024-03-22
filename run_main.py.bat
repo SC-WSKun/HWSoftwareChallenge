@@ -1,1 +1,1 @@
-.\PreliminaryJudge.exe -f 3 -m .\maps\map1.txt "python main.py"
+.\PreliminaryJudge.exe -f 100 -l DBG -m .\maps\map1.txt "python app/main.py"
