@@ -1,6 +1,5 @@
 import sys
 
-from numpy import single
 from Berth import Berth
 
 berth_move_between = 500
@@ -40,7 +39,7 @@ class Boat:
                 continue
             else:
                 """
-                计算装货时间
+                0. 计算装货时间
                 """
                 arrive_time = current_frame + single_berth.transport_time
                 if arrive_time >= 15000:
@@ -71,8 +70,8 @@ class Boat:
                     left -= single_berth.loading_speed
                     leave_goods += single_berth.loading_speed
                 """
-                        1. 计算获取价值
-                        """
+                1. 计算获取价值
+                """
                 single_value = 0
                 # sort_keys = single_berth.future_goods.keys().sort()
                 sort_keys = sorted(single_berth.future_goods.keys())
@@ -82,8 +81,8 @@ class Boat:
                     else:
                         break
                 """
-                        2. 与best_value比较
-                        """
+                2. 与best_value比较
+                """
                 if single_value > best_value:
                     best_berth = single_berth
                     # best_deal_goods = leave_goods - arrive_goods
@@ -181,7 +180,7 @@ class Boat:
     """
 
     def load_goods(self, goods_num):
-        if self.goods + goods_num > self.num:
+        if self.goods + goods_num > self.num:  # 超载判断
             self.goods = self.num
             return self.num - self.goods
         else:
@@ -195,9 +194,13 @@ class Boat:
     def is_full(self):
         return self.goods == self.num
 
+    """
+    决策
+    """
+
     def next_step(self, current_frame, berths):
         self.berths = berths
-        if self.pos == -1 and self.status == 1:
+        if self.pos == -1 and self.status == 1:  # 船在虚拟点，且已经卸货
             # 船在虚拟点，需要前往泊位
             best_berth_id, best_deal_time, best_value, leave_time = (
                 self.search_best_berth(current_frame).values()
@@ -208,7 +211,7 @@ class Boat:
                 return
             print("ship", self.id, best_berth_id)
             sys.stdout.flush()
-            self.goods = 0
+            self.goods = 0  # 船清空
             self.berths[best_berth_id].boat_arrive(self)
             self.arrive_time = current_frame + self.berths[best_berth_id].transport_time
             self.leave_time = leave_time

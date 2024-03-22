@@ -38,9 +38,10 @@ class Berth:
     def boat_load(self, current_time):  # 每帧执行
         if self.boat == None:  # 当前没有船要到达该码头
             return
-        if current_time >= self.boat.leave_time:
-            if self.boat_leave(max(current_time, self.boat.leave_time)):
-                return  # 船离开结束boat_load
+        if current_time >= self.boat.arrive_time:
+            if current_time >= self.boat.leave_time:
+                if self.boat_leave(max(current_time, self.boat.leave_time)):
+                    return  # 船离开结束boat_load
             # 船没有离开，继续装货
             nums_arr = self.nums[current_time]
             load_nums = self.boat.load_goods(min(nums_arr, self.loading_speed))
