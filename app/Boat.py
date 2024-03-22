@@ -15,7 +15,7 @@ class Boat:
         self.pos = pos  # 处在哪个泊位，虚拟点则为-1
         self.arrive_time = 0  # 下一个位置的到达时间
         self.leave_time = 0  # 下一个位置的离开时间
-        self.berths = []  # 船的泊位
+        self.berths = {}  # 船的泊位
         """
         船的状态
         0: 船在移动中
@@ -32,7 +32,7 @@ class Boat:
         # best_deal_goods = None
         best_deal_time = -1
         best_value = -1
-        for single_berth in self.berths:
+        for single_berth in self.berths.values():
             """
             判断泊位有无船只，且非当前泊位
             """
