@@ -52,7 +52,7 @@ class Berth:
                 del self.future_goods[goods_key[i]]
 
     def boat_leave(self, current_time):
-        if self.nums[current_time] == 0 or self.boat.is_full():
+        if self.nums[current_time] == 0 or self.boat.is_full() or (15000 - current_time) < self.transport_time:
             self.boat.leave_berth(current_time)
             self.boat = None
             self.status = 0

@@ -18,12 +18,11 @@ class Boat:
         self.berths = []  # 船的泊位
         """
         船的状态
-        0: 船在虚拟点
-        1: 船在前往泊位的途中
-        2: 船在泊位上
-        3: 船在前往虚拟点的途中
+        0: 船在移动中
+        1: 船在装货或运输完成
+        2: 船在泊位上等待
         """
-        self.status = 0
+        self.status = 1
 
     def search_best_berth(self, current_frame):
         """
@@ -44,12 +43,17 @@ class Boat:
                 计算装货时间
                 """
                 arrive_time = current_frame + single_berth.transport_time
+                if arrive_time >= 15000:
+                    continue
                 # arrive_goods = self.goods
                 leave_goods = self.goods
                 deal_time = 0
                 left = single_berth.nums[arrive_time]
                 while left > 0:
                     deal_time += 1
+                    if arrive_time + deal_time >= 15000:
+                        deal_time -= 1
+                        break
                     if (
                         leave_goods + single_berth.loading_speed > self.num
                     ):  # 船装不下了
@@ -85,12 +89,22 @@ class Boat:
                     # best_deal_goods = leave_goods - arrive_goods
                     best_deal_time = deal_time
                     best_value = single_value
-        return {
-            "best_berth_id": best_berth.id,
-            "best_deal_time": best_deal_time,
-            "best_value": best_value,
-            "leave_time": current_frame + best_berth.transport_time + best_deal_time,
-        }
+        if best_berth is None:
+            return {
+                "best_berth_id": -1,
+                "best_deal_time": 0,
+                "best_value": 0,
+                "leave_time": 0,
+            }
+        else:
+            return {
+                "best_berth_id": best_berth.id,
+                "best_deal_time": best_deal_time,
+                "best_value": best_value,
+                "leave_time": current_frame
+                + best_berth.transport_time
+                + best_deal_time,
+            }
 
     def search_next_berth(self, current_frame):
         """
@@ -122,6 +136,18 @@ class Boat:
                 "best_value": 0,
                 "leave_time": 0,
             }
+        elif (
+            self.berths[best_berth_id].transport_time
+            + berth_move_between
+            + current_frame
+            >= 15000
+        ):
+            return {
+                "best_berth_id": -1,
+                "best_deal_time": 0,
+                "best_value": 0,
+                "leave_time": 0,
+            }
         else:
             return {
                 "best_berth_id": best_berth_id,
@@ -139,7 +165,7 @@ class Boat:
             current_frame
         ).values()
         if best_berth_id == -1:
-            self.status = 3
+            # self.status = 3
             self.arrive_time = current_frame + self.berths[self.pos].transport_time
             print("go", self.id)
             sys.stdout.flush()
@@ -171,12 +197,15 @@ class Boat:
 
     def next_step(self, current_frame, berths):
         self.berths = berths
-        if self.pos == -1:
+        if self.pos == -1 and self.status == 1:
             # 船在虚拟点，需要前往泊位
             best_berth_id, best_deal_time, best_value, leave_time = (
                 self.search_best_berth(current_frame).values()
             )
-            print("ship", self.id, best_berth_id)
+            if 2 * self.berths[best_berth_id].transport_time + current_frame >= 15000:
+                print("ship", self.id, -1)
+            else:
+                print("ship", self.id, best_berth_id)
             sys.stdout.flush()
             self.goods = 0
             self.berths[best_berth_id].boat_arrive(self)

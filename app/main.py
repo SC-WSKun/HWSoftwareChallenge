@@ -346,8 +346,7 @@ def Input():
             int, input().split()
         )
     for i in range(5):
-        unusedState, boat[i].pos = map(int, input().split())
-        # boat[i].status, boat[i].pos = map(int, input().split())
+        boat[i].status, boat[i].pos = map(int, input().split())
     okk = input()
 
 
