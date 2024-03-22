@@ -119,11 +119,10 @@ class Boat:
         best_deal_time = -1
         best_value = -1
         for single_berth in self.berths.values():
-            """
-            判断泊位有无船只，且非当前泊位
-            """
-            if single_berth.status == 1 or single_berth.id == self.pos:
+            if single_berth.id == self.pos:  # 不能回到当前泊位
                 continue
+            elif single_berth.status == 1:  # 处理重叠
+                return
             else:
                 """
                 0. 计算装货时间

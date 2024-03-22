@@ -261,21 +261,25 @@ def berth_land_location():
     :return:
     """
     for i in berth.keys():
+        land_x = berth[i].x
+        land_y = berth[i].y
         if len(adjacency_table[(berth[i].x + 3) * n + berth[i].y]) > len(
-            adjacency_table[(berth[i].land_x) * n + berth[i].land_y]
+            adjacency_table[land_x * n + land_y]
         ):
-            berth[i].land_x = berth[i].x + 3
-            berth[i].land_y = berth[i].y
+            land_x = berth[i].x + 3
+            land_y = berth[i].y
         if len(adjacency_table[(berth[i].x) * n + berth[i].y + 3]) > len(
-            adjacency_table[(berth[i].land_x) * n + berth[i].land_y]
+            adjacency_table[land_x * n + land_y]
         ):
-            berth[i].land_x = berth[i].x
-            berth[i].land_y = berth[i].y + 3
+            land_x = berth[i].x
+            land_y = berth[i].y + 3
         if len(adjacency_table[(berth[i].x + 3) * n + berth[i].y + 3]) > len(
-            adjacency_table[(berth[i].land_x) * n + berth[i].land_y]
+            adjacency_table[land_x * n + land_y]
         ):
-            berth[i].land_x = berth[i].x + 3
-            berth[i].land_y = berth[i].y + 3
+            land_x = berth[i].x + 3
+            land_y = berth[i].y + 3
+        berth[i].x = land_x
+        berth[i].y = land_y
 
 
 def Init():
@@ -318,6 +322,7 @@ def Init():
     okk = input()  # 初始化数据，以ok结束
 
     get_adjacent_table()
+    berth_land_location()
     for i in berth.keys():  # 处理港口的all_path
         berth[i].all_path = find_all_paths(C_to_N(berth[i].x, berth[i].y))
 
@@ -625,66 +630,28 @@ def Robot_control(index):
         Robot_have_goods(index)
 
 
-berth_good_list = []
-
-
+all_good_list = []
 if __name__ == "__main__":
     Init()
-    # berth_land_location()
     for zhen in range(1, 15001):
         life_minus_one()
         Input()
         # Cargo_handling()
-
-        # start1 = time.time()
         for index in range(robot_num):
             if zhen == 1:
                 robot[index].choose_berth()
             Robot_control(index)
-        # end1 = time.time()
-
-        # start2 = time.time()
         # # 船先决策，港口最后决策
         for single_boat in boat:
             single_boat.next_step(zhen, berth)
-        # end2 = time.time()
-
-        # start3 = time.time()
         for k in berth.keys():
             berth[k].boat_load(zhen)
-        # end3 = time.time()
-
-        # TOTAL_TIME.append([end1 - start1, end2 - start2, end3 - start3])
-        # if zhen == 1000:
-        #     a = 0
-        #     b = 0
-        #     c = 0
-        #     max_a = 0
-        #     max_b = 0
-        #     max_c = 0
-        #     for i in TOTAL_TIME:
-        #         a += i[0]
-        #         b += i[1]
-        #         c += i[2]
-        #         if i[0] > max_a:
-        #             max_a = i[0]
-        #         if i[1] > max_b:
-        #             max_b = i[1]
-        #         if i[2] > max_c:
-        #             max_c = i[2]
-        #     TOTAL_TIME.append([max_a, max_b, max_c])
-        #     TOTAL_TIME.append([a/1000, b/1000, c/1000])
-        #     ser = pd.Series(TOTAL_TIME)
-        #     ser.to_excel("time.xlsx", index=True)
-        #     ex = Exception("测试")
-        #     raise ex
-        zhen_goods_list = []
+        zhen_good_list = []
         for single_berth in berth.keys():
-            zhen_goods_list.append(berth[single_berth].nums[zhen])
-        berth_good_list.append(zhen_goods_list)
-        if zhen == 15000:
-            ser = pd.Series(berth_good_list)
-            ser.to_excel("berth_goods.xlsx", index=True)
-
+            zhen_good_list.append(berth[single_berth].nums[zhen])
+        all_good_list.append(zhen_good_list)
+        if zhen == 14000:
+            ser = pd.Series(all_good_list)
+            ser.to_excel("all_good_list.xlsx", index=True)
         print("OK")
         sys.stdout.flush()

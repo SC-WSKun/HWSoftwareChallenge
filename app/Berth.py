@@ -18,10 +18,11 @@ class Berth:
         self.total_values = 0  # 当前港口上货物的总价值
         self.future_goods = {}  # 记录港口未来到达的货物，key是货物在那一帧到达，value是货物的价值
         self.temp_boat = test_boat
-        self.robots_nums = 0  # 选择这个港口的机器人数量
-        self.benefit = 1 / self.transport_time
+        self.robots_nums = 0 #选择这个港口的机器人数量
+        self.benefit = 1/transport_time
         self.land_x = x
         self.land_y = y
+    
 
     def robot_pull(self, time, value):  # 机器人放置物品到码头，time是机器人到达的时间
         self.nums[time:] += 1
@@ -41,50 +42,21 @@ class Berth:
     def boat_load(self, current_time):  # 每帧执行
         if self.boat == None:  # 当前没有船要到达该码头
             return
-        if current_time >= self.boat.arrive_time:
-            if current_time >= self.boat.leave_time:
+        if current_time>=self.boat.arrive_time:
+            if current_time >= min(self.boat.leave_time,14998-self.transport_time):
                 if self.boat_leave(max(current_time, self.boat.leave_time)):
                     return  # 船离开结束boat_load
-            # 船没有离开，继续装货
-            nums_arr = self.nums[current_time]
-            load_nums = self.boat.load_goods(min(nums_arr, self.loading_speed))
-            self.nums[current_time:] -= load_nums
-            # 对价值进行更新
-            goods_key = sorted(self.future_goods.keys())
-            for i in range(load_nums):
-                del self.future_goods[goods_key[i]]
+                # 船没有离开，继续装货
+                nums_arr = self.nums[current_time]
+                load_nums = self.boat.load_goods(min(nums_arr, self.loading_speed))
+                self.nums[current_time :] -= load_nums
+                # 对价值进行更新
+                goods_key = sorted(self.future_goods.keys())
+                for i in range(load_nums):
+                    del self.future_goods[goods_key[i]]
 
     def boat_leave(self, current_time):
-        """
-        如果满载，船离开码头
-        """
-        if self.boat.is_full():
-            self.boat.go_back()
-            self.boat = None
-            self.status = 0
-            return True
-        """
-        如果时间还剩下1倍距离，则返回虚拟点
-        """
-        if current_time + self.transport_time >= 15000:
-            self.boat.go_back()
-            self.boat = None
-            self.status = 0
-            return True
-        """
-        如果时间还剩下3倍距离，船开始做是否前往另外码头的决策
-        """
-        # if (current_time + 3 * self.transport_time) >= 15000 and (
-        #     current_time + 2 * self.transport_time
-        # ) < 15000:
-        #     self.boat.leave_berth(current_time)
-        #     self.boat = None
-        #     self.status = 0
-        #     return True
-        """
-        如果码头上没有货物，船离开
-        """
-        if self.nums[current_time] == 0:
+        if self.nums[current_time] == 0 or self.boat.is_full() or (14999 - current_time) < self.transport_time:
             self.boat.leave_berth(current_time)
             self.boat = None
             self.status = 0
@@ -95,3 +67,5 @@ class Berth:
         self.boat = boat
         # self.boat = self.temp_boat[boat_id]
         self.status = 1
+
+    
