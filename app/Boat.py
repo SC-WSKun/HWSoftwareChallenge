@@ -83,7 +83,9 @@ class Boat:
                 """
                 2. 与best_value比较
                 """
-                if single_value > best_value:
+                if best_berth is None or single_value / (
+                    single_berth.transport_time + deal_time
+                ) > best_value / (best_berth.transport_time + best_deal_time):
                     best_berth = single_berth
                     # best_deal_goods = leave_goods - arrive_goods
                     best_deal_time = deal_time
@@ -107,21 +109,14 @@ class Boat:
 
     def search_next_berth(self, current_frame):
         """
-        装满就走
-        """
-        if self.goods == self.num:
-            return {
-                "best_berth_id": -1,
-                "best_deal_time": 0,
-                "best_value": 0,
-                "leave_time": 0,
-            }
-        """
-        判断返回虚拟点还是下一个泊位
+        获取下一个最佳泊位
         """
         best_berth_id, best_deal_time, best_value, leave_time = self.search_best_berth(
             current_frame
         ).values()
+        """
+        判断去下一个泊位还是返回虚拟点
+        """
         if self.values / self.berths[self.pos].transport_time > (
             self.values + best_value
         ) / (
@@ -164,16 +159,21 @@ class Boat:
             current_frame
         ).values()
         if best_berth_id == -1:
-            # self.status = 3
-            self.arrive_time = current_frame + self.berths[self.pos].transport_time
-            print("go", self.id)
-            sys.stdout.flush()
+            self.go_back()
         else:
             print("ship", self.id, best_berth_id)
             sys.stdout.flush()
             self.berths[best_berth_id].boat_arrive(self)
             self.arrive_time = current_frame + self.berths[best_berth_id].transport_time
             self.leave_time = leave_time
+
+    """
+    返回虚拟点
+    """
+
+    def go_back(self):
+        print("go", self.id)
+        sys.stdout.flush()
 
     """
     装货

@@ -52,11 +52,36 @@ class Berth:
                 del self.future_goods[goods_key[i]]
 
     def boat_leave(self, current_time):
-        if (
-            self.nums[current_time] == 0
-            or self.boat.is_full()
-            or (15000 - current_time) < self.transport_time
-        ):
+        """
+        如果满载，船离开码头
+        """
+        if self.boat.is_full():
+            self.boat.go_back()
+            self.boat = None
+            self.status = 0
+            return True
+        """
+        如果时间还剩下1倍距离，则返回虚拟点
+        """
+        if current_time + self.transport_time >= 15000:
+            self.boat.go_back()
+            self.boat = None
+            self.status = 0
+            return True
+        """
+        如果时间还剩下3倍距离，船开始做是否前往另外码头的决策
+        """
+        if (current_time + 3 * self.transport_time) >= 15000 and (
+            current_time + 2 * self.transport_time
+        ) < 15000:
+            self.boat.leave_berth(current_time)
+            self.boat = None
+            self.status = 0
+            return True
+        """
+        如果码头上没有货物，船离开
+        """
+        if self.nums[current_time] == 0:
             self.boat.leave_berth(current_time)
             self.boat = None
             self.status = 0
