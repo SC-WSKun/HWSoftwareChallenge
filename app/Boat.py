@@ -203,7 +203,7 @@ class Boat:
                 self.search_best_berth(current_frame).values()
             )
             if 2 * self.berths[best_berth_id].transport_time + current_frame >= 15000:
-                print("ship", self.id, -1)
+                return
             else:
                 print("ship", self.id, best_berth_id)
             sys.stdout.flush()
