@@ -8,7 +8,7 @@ class Berth:
         self.y = y
         self.transport_time = transport_time
         self.loading_speed = loading_speed
-        self.nums = np.array([0 for i in range(15000)])
+        self.nums = np.array([0 for i in range(15001)])
         self.boat = None  # 最快到达港口的船
         self.status = 0  # 0没有船要过来，1有船正在泊位上或者将要过来
         self.robot_arrive_time = -1  # 机器人到达的时间
@@ -19,6 +19,9 @@ class Berth:
         self.future_goods = {}  # 记录港口未来到达的货物，key是货物在那一帧到达，value是货物的价值
         self.temp_boat = test_boat
         self.robots_nums = 0  # 选择这个港口的机器人数量
+        self.benefit = 1 / self.transport_time
+        self.land_x = x
+        self.land_y = y
 
     def robot_pull(self, time, value):  # 机器人放置物品到码头，time是机器人到达的时间
         self.nums[time:] += 1
@@ -71,13 +74,13 @@ class Berth:
         """
         如果时间还剩下3倍距离，船开始做是否前往另外码头的决策
         """
-        if (current_time + 3 * self.transport_time) >= 15000 and (
-            current_time + 2 * self.transport_time
-        ) < 15000:
-            self.boat.leave_berth(current_time)
-            self.boat = None
-            self.status = 0
-            return True
+        # if (current_time + 3 * self.transport_time) >= 15000 and (
+        #     current_time + 2 * self.transport_time
+        # ) < 15000:
+        #     self.boat.leave_berth(current_time)
+        #     self.boat = None
+        #     self.status = 0
+        #     return True
         """
         如果码头上没有货物，船离开
         """

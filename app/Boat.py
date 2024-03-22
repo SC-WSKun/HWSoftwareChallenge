@@ -3,6 +3,7 @@ import sys
 from Berth import Berth
 
 berth_move_between = 500
+money_time_weight = 1500
 
 
 class Boat:
@@ -83,9 +84,11 @@ class Boat:
                 """
                 2. 与best_value比较
                 """
-                if best_berth is None or single_value / (
-                    single_berth.transport_time + deal_time
-                ) > best_value / (best_berth.transport_time + best_deal_time):
+                if (
+                    best_berth is None
+                    or single_value + money_time_weight / single_berth.transport_time
+                    > best_value + money_time_weight / best_berth.transport_time
+                ):
                     best_berth = single_berth
                     # best_deal_goods = leave_goods - arrive_goods
                     best_deal_time = deal_time
@@ -109,20 +112,82 @@ class Boat:
 
     def search_next_berth(self, current_frame):
         """
-        获取下一个最佳泊位
+        计算每个泊位的连续装货最大货物量
         """
-        best_berth_id, best_deal_time, best_value, leave_time = self.search_best_berth(
-            current_frame
-        ).values()
+        best_berth = None
+        # best_deal_goods = None
+        best_deal_time = -1
+        best_value = -1
+        for single_berth in self.berths.values():
+            """
+            判断泊位有无船只，且非当前泊位
+            """
+            if single_berth.status == 1 or single_berth.id == self.pos:
+                continue
+            else:
+                """
+                0. 计算装货时间
+                """
+                arrive_time = current_frame + berth_move_between
+                if arrive_time >= 15000:
+                    continue
+                # arrive_goods = self.goods
+                leave_goods = self.goods
+                deal_time = 0
+                left = single_berth.nums[arrive_time]
+                while left > 0:
+                    deal_time += 1
+                    if arrive_time + deal_time >= 15000:
+                        deal_time -= 1
+                        break
+                    if (
+                        leave_goods + single_berth.loading_speed > self.num
+                    ):  # 船装不下了
+                        left -= self.num - self.goods
+                        leave_goods = self.num
+                        break
+                    left += (
+                        single_berth.nums[arrive_time + deal_time]
+                        - single_berth.nums[arrive_time + deal_time - 1]
+                    )
+                    if left < single_berth.loading_speed:  # 货物不够了
+                        left = 0
+                        leave_goods += left
+                        break
+                    left -= single_berth.loading_speed
+                    leave_goods += single_berth.loading_speed
+                """
+                1. 计算获取价值
+                """
+                single_value = 0
+                # sort_keys = single_berth.future_goods.keys().sort()
+                sort_keys = sorted(single_berth.future_goods.keys())
+                for key in sort_keys:
+                    if key <= arrive_time + deal_time:
+                        single_value = single_berth.future_goods[key]
+                    else:
+                        break
+                """
+                2. 与best_value比较
+                """
+                if best_berth is None or single_value + money_time_weight / (
+                    berth_move_between + single_berth.transport_time
+                ) > best_value + money_time_weight / (
+                    berth_move_between + best_berth.transport_time
+                ):
+                    best_berth = single_berth
+                    # best_deal_goods = leave_goods - arrive_goods
+                    best_deal_time = deal_time
+                    best_value = single_value
         """
         判断去下一个泊位还是返回虚拟点
         """
-        if self.values / self.berths[self.pos].transport_time > (
-            self.values + best_value
-        ) / (
+        if best_berth is None or (self.values + money_time_weight) / self.berths[
+            self.pos
+        ].transport_time > (self.values + best_value + money_time_weight) / (
             berth_move_between
             + best_deal_time
-            + self.berths[best_berth_id].transport_time
+            + self.berths[best_berth.id].transport_time
         ):
             return {
                 "best_berth_id": -1,
@@ -131,7 +196,7 @@ class Boat:
                 "leave_time": 0,
             }
         elif (
-            self.berths[best_berth_id].transport_time
+            self.berths[best_berth.id].transport_time
             + berth_move_between
             + current_frame
             >= 15000
@@ -144,7 +209,7 @@ class Boat:
             }
         else:
             return {
-                "best_berth_id": best_berth_id,
+                "best_berth_id": best_berth.id,
                 "best_deal_time": best_deal_time,
                 "best_value": best_value,
                 "leave_time": current_frame + berth_move_between + best_deal_time,
